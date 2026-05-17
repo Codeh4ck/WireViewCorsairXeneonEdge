@@ -5,6 +5,9 @@ namespace WireViewMonitor.Service.WireView;
 
 internal static class Stm32PortFinder
 {
+    private const string VendorId = "VID_0483";
+    private const string ProductId = "PID_5740";
+    
     public static List<string> FindMatchingComPorts()
     {
         var matchingComPorts = new List<string>();
@@ -31,13 +34,17 @@ internal static class Stm32PortFinder
             for (uint memberIndex = 0; WinApi.SetupDiEnumDeviceInfo(allClassesPresent, memberIndex, ref deviceInfoData); ++memberIndex)
             {
                 var registryPropertyMultiSz = WindowsSetupApi.TryGetDeviceRegistryPropertyMultiSz(allClassesPresent, ref deviceInfoData, 1U);
+                if (registryPropertyMultiSz == null || registryPropertyMultiSz.Length == 0 || !HardwareIdsContainVidPid(registryPropertyMultiSz, VendorId, ProductId))
+                {
+                    continue;
+                }
 
-                if (registryPropertyMultiSz == null || registryPropertyMultiSz.Length == 0 || !HardwareIdsContainVidPid(registryPropertyMultiSz, "VID_0483", "PID_5740")) continue;
-                
                 var registryPropertyString = WindowsSetupApi.TryGetDeviceRegistryPropertyString(allClassesPresent, ref deviceInfoData, 12U);
+                if (string.IsNullOrWhiteSpace(registryPropertyString))
+                {
+                    continue;
+                }
 
-                if (string.IsNullOrWhiteSpace(registryPropertyString)) continue;
-                
                 var fromFriendlyName = TryExtractComPortFromFriendlyName(registryPropertyString);
 
                 if (!string.IsNullOrWhiteSpace(fromFriendlyName))

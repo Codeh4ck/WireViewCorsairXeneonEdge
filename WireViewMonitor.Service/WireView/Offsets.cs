@@ -1,6 +1,4 @@
-﻿namespace WireViewMonitor.Service.WireView;
-
-// ── SensorStruct byte offsets ────────────────────────────────────────────
+﻿// ── SensorStruct byte offsets ────────────────────────────────────────────
 // short[4] Ts           offset  0  size  8
 // ushort   Vdd          offset  8  size  2
 // byte     FanDuty      offset 10  size  1

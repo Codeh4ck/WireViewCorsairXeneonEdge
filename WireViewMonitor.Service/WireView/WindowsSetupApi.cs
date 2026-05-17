@@ -13,80 +13,6 @@ internal static class WindowsSetupApi
 
     public static bool IsInvalidHandle(IntPtr h) => h == IntPtr.Zero || h == InvalidHandleValue;
 
-    public static IEnumerable<string> EnumerateDeviceInstanceIds()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            yield break;
-        }
-
-        var handle = SetupDiGetClassDevsAllClassesPresent();
-
-        if (IsInvalidHandle(handle))
-        {
-            yield break;
-        }
-
-        try
-        {
-            var deviceInfoData = new SpDeviceInfoData()
-            {
-                CbSize = (uint)Marshal.SizeOf<SpDeviceInfoData>()
-            };
-                    
-            for (uint i = 0; WinApi.SetupDiEnumDeviceInfo(handle, i, ref deviceInfoData); ++i)
-            {
-                var deviceInstanceId = TryGetDeviceInstanceId(deviceInfoData.DevInst);
-                if (!string.IsNullOrWhiteSpace(deviceInstanceId))
-                {
-                    yield return deviceInstanceId;
-                }
-            }
-        }
-        finally
-        {
-            WinApi.SetupDiDestroyDeviceInfoList(handle);
-        }
-    }
-
-    public static IEnumerable<(string InstanceId, string? DeviceDesc, string? FriendlyName)> EnumeratePresentDevicesWithNames()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            yield break;
-        }
-
-        var handle = SetupDiGetClassDevsAllClassesPresent();
-
-        if (IsInvalidHandle(handle))
-        {
-            yield break;
-        }
-
-        try
-        {
-            var deviceInfoData = new SpDeviceInfoData()
-            {
-                CbSize = (uint)Marshal.SizeOf<SpDeviceInfoData>()
-            };
-                    
-            for (uint i = 0; WinApi.SetupDiEnumDeviceInfo(handle, i, ref deviceInfoData); ++i)
-            {
-                var deviceInstanceId = TryGetDeviceInstanceId(deviceInfoData.DevInst);
-
-                if (string.IsNullOrWhiteSpace(deviceInstanceId)) continue;
-                
-                var registryPropertyString1 = TryGetDeviceRegistryPropertyString(handle, ref deviceInfoData, 0U);
-                var registryPropertyString2 = TryGetDeviceRegistryPropertyString(handle, ref deviceInfoData, 12U);
-                yield return (deviceInstanceId, registryPropertyString1, registryPropertyString2);
-            }
-        }
-        finally
-        {
-            WinApi.SetupDiDestroyDeviceInfoList(handle);
-        }
-    }
-
     public static string? TryGetDeviceRegistryPropertyString(IntPtr devInfoSet, ref SpDeviceInfoData deviceInfoData, uint property)
     {
         WinApi.SetupDiGetDeviceRegistryPropertyW(devInfoSet, ref deviceInfoData, property, out _, null, 0U, out var requiredSize);
@@ -159,24 +85,6 @@ internal static class WindowsSetupApi
         {
             WinApi.SetupDiDestroyDeviceInfoList(handle);
         }
-    }
-
-    private static string? TryGetDeviceInstanceId(uint devInst)
-    {
-        var deviceId = new char[512];
-        
-        if (WinApi.CM_Get_Device_ID(devInst, deviceId, (uint)deviceId.Length, 0U) == 0U)
-        {
-            return new string(deviceId).TrimEnd(char.MinValue);
-        }
-
-        if (WinApi.CM_Get_Device_ID_Size(out var pulLen, devInst, 0U) != 0U || pulLen <= 0U)
-        {
-            return null;
-        }
-
-        var deviceIdEx = new char[(int)pulLen + 1];
-        return WinApi.CM_Get_Device_ID(devInst, deviceIdEx, (uint)deviceIdEx.Length, 0U) == 0U ? new string(deviceIdEx).TrimEnd(char.MinValue) : null;
     }
 
     private static string DecodeUtf16String(byte[] bytes)

@@ -5,7 +5,7 @@ namespace WireViewMonitor.Service.WireView;
 internal sealed class SharedSerialPort(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits)
     : SerialPort(portName, baudRate, parity, dataBits, stopBits)
 {
-    private readonly Mutex _mutex = new Mutex(false, "Global\\Access_USB_Sensors");
+    private readonly Mutex _mutex = new(false, "Global\\Access_USB_Sensors");
     private bool _hasMutex;
 
     private int MutexTimeout { get; set; } = 2000;
