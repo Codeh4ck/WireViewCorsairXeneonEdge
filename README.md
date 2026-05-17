@@ -65,24 +65,31 @@ The included Corsair Xeneon Edge widget connects to `/ws` on startup and renders
 
 The included Corsair Xeneon Edge widget is a bit reminiscent of the official WireView Pro 2 application display (to provide a familiar viewing experience). It provides the same information displayed by the WireView Pro 2 application, with the addition of a few more niceties.
 
-**Views:** the widget offers four display views, selectable from iCUE widget settings:
+**Views:**  
+The widget offers four display views, selectable from iCUE widget settings:
 
 - **Pins view:** Vertical bar chart for pins P1–P6. Supports three metrics: current (A), power (W), and voltage (V). Optional features include a Y-axis with configurable grid lines, a per-bar background, a maximum imbalance footer, a per-pin power/current/voltage values footer, and an imbalance threshold limit line. All font sizes and colors are individually configurable.
 - **Temperatures view:** Arc gauge display for temperature sensors. Supports board sensors (Onboard In / Onboard Out) and external sensors (External 1 / External 2). Temperatures can be displayed in °C or °F. Each sensor can be shown or hidden independently, with configurable arc width, gauge colors, and font sizes.
 - **Power view:** Row-based summary of total power (W), total current (A), voltage (V), cable rating (W), and system load percentage. An optional load bar is available. Each row can be individually shown or hidden with configurable colors and font sizes.
 - **Faults view:** Grid table listing all fault types (Overtemperature, Overcurrent, Wire Overcurrent, Overpower, Current Imbalance) with their current status and historical log. Active faults can be cleared by tapping them, which sends the clear request to the WireView Pro 2 device via the service.
 
-**Multi-panel layout:** on the Corsair Xeneon Edge, the widget can display up to two or three views simultaneously side-by-side, making full use of the available screen width. Panel combinations are configurable from iCUE settings.
+**Multi-panel layout:**  
+On the Corsair Xeneon Edge, the widget can display up to two or three views simultaneously side-by-side, making full use of the available screen width. Panel combinations are configurable from iCUE settings.
 
-**Fault warning banner:** a floating banner slides in from the top of the widget whenever the WireView Pro 2 device reports an active fault. The banner shows the fault type (or a count when multiple are active) and can be dismissed per occurrence. It reappears automatically if the fault condition persists after dismissal. Warning color, text color, font size, and background transparency are all configurable.
+**Fault warning banner:**  
+A floating banner slides in from the top of the widget whenever the WireView Pro 2 device reports an active fault. The banner shows the fault type (or a count when multiple are active) and can be dismissed per occurrence. It reappears automatically if the fault condition persists after dismissal. Warning color, text color, font size, and background transparency are all configurable.
 
-**Fault details dialog:** a secondary overlay that automatically appears when one or more faults are active and the Faults view is not currently visible in any panel. It shows all fault types with their Status and Log state using colour-coded icons. Active faults (Status or Log) can be cleared individually by tapping their icon. The dialog is dismissed with the close button and will reappear on the next data update if faults remain.
+**Fault details dialog:**  
+A secondary overlay that automatically appears when one or more faults are active and the Faults view is not currently visible in any panel. It shows all fault types with their Status and Log state using colour-coded icons. Active faults (Status or Log) can be cleared individually by tapping their icon. The dialog is dismissed with the close button and will reappear on the next data update if faults remain.
 
-**Device configuration overlay:** accessible by double-tapping anywhere on the widget (or long-press, configurable). Displays the full WireView Pro 2 device configuration as read from the device: fan settings, fault thresholds, averaging, logging intervals, and the enabled/disabled state of display, buzzer, soft power cutoff, and hard power cutoff per fault type. Includes a **Restart service** button that gracefully restarts the background Windows service.
+**Device configuration overlay:**  
+Accessible by double-tapping anywhere on the widget (or long-press, configurable). Displays the full WireView Pro 2 device configuration as read from the device: fan settings, fault thresholds, averaging, logging intervals, and the enabled/disabled state of display, buzzer, soft power cutoff, and hard power cutoff per fault type. Includes a **Restart service** button that gracefully restarts the background Windows service.
 
-**Real-time telemetry:** sensor data is delivered via a WebSocket connection to the background service. The polling interval is configurable from iCUE settings (minimum 200 ms). On connection loss the widget automatically reconnects with exponential backoff and shows a clear error state while the service is unavailable.
+**Real-time telemetry:**  
+Sensor data is delivered via a WebSocket connection to the background service. The polling interval is configurable from iCUE settings (minimum 200 ms). On connection loss the widget automatically reconnects with exponential backoff and shows a clear error state while the service is unavailable.
 
-**Configurable UI:** virtually every visual element of the widget is configurable through iCUE widget settings: colors, font sizes, show/hide toggles, temperature unit, arc width, and more. Changes take effect immediately.
+**Configurable UI:**  
+Virtually every visual element of the widget is configurable through iCUE widget settings: colors, font sizes, show/hide toggles, temperature unit, arc width, and more. Changes take effect immediately.
 
 ## Installation
 
@@ -95,20 +102,20 @@ The included Corsair Xeneon Edge widget is a bit reminiscent of the official Wir
 
 **Installing the background service:**
 
-1. Right-click `install.ps1` and select **Run with PowerShell**, or open an elevated PowerShell terminal and run `.\install.ps1`. Administrator privileges are required.
+1. Open an elevated PowerShell terminal and run `.\install.ps1`. Administrator privileges are required.
 2. The script will install the service to `%ProgramFiles%\WireViewSensorService`, register it as a Windows service that starts automatically, configure automatic recovery on failure, and start it immediately.
 3. Once complete, verify that the service is running: open **Task Manager → Services** and look for `WireViewSensorService`, or run `Get-Service WireViewSensorService` in PowerShell.
 
 **Installing the iCUE widget:**
 
-1. Double-click `WireViewPro2.icuewidget`, iCUE will import it automatically.
-2. Add the widget to a dashboard that targets the Corsair Xeneon Edge LCD. The widget is only compatible with the `dashboard_lcd` placement type.
+1. Install manually the widget by importing `WireViewPro2.icuewidget` to iCUE's widget library
+2. Add the widget to a Corsair Xeneon Edge page.
 3. Configure the widget through the iCUE widget settings panel.
 
 **Uninstalling:**
 
-1. Right-click `uninstall.ps1` and select **Run with PowerShell**, or run it from an elevated terminal. The script stops and removes the Windows service and deletes all installed files.
-2. Remove the widget from iCUE manually (right-click the widget → Remove).
+1. Open an elevated PowerShell terminal and run `.\uninstall.ps1`. Administrator privileges are required. The script stops and removes the Windows service and deletes all installed files.
+2. Remove the widget from iCUE manually
 
 **Note:** The service writes diagnostic logs to the Windows Event Viewer under **Windows Logs → Application → WireViewSensorService**.
 
@@ -125,10 +132,15 @@ The following features are present in the official WireView Pro 2 application bu
 | Firmware updates | ✅ | ❌ |
 
 **Notes:**
+
 - **Device configuration (write):** The service already reads device configuration. Writing configuration back to the device (e.g. changing fault thresholds or fan settings from the widget) is feasible via the same USB protocol but is not planned. I do not want to risk bricking devices due to bad writes or unforseen errors. Use the official WireView Pro 2 application to update your device configuration. Then double tap or long press your WireView Pro 2 iCUE widget to show the device configuration. Hit the refresh button to allow the widget to fetch the new values.
+
 - **Device logging:** The WireView Pro 2 stores an log of sensor readouts. Exposing and displaying these logs through the widget is planned.
+
 - **Device monitoring charts:** The widget runs in a full HTML/JS environment, so real-time line charts of sensor history (current, power, temperature over time) are fully feasible using SVG or Canvas. Not currently planned but architecturally straightforward.
+
 - **PC shutdown on fault through OS:** The service can detect active faults and issue a Windows shutdown command. Planned as an opt-in safety feature for unattended use cases. This feature however will be specifically for users who have not installed the provided front panel jumper cable that restarts the computer through motherboard signals.
+
 - **Firmware updates:** Delivering firmware to the device over USB is technically possible but is not planned. Use the official WireView Pro 2 application for firmware updates. High risk of bricking in case of faulty implementation and practically unable to test it without risk.
 
 ## Disclaimer
