@@ -913,7 +913,6 @@
       const clampedLoad = Math.max(0, Math.min(100, loadPct)).toFixed(1);
 
       if (container.dataset.powerStructKey === structKey) {
-        // In-place update — CSS transition on load-fill handles animation
         function updRow(key, text, color) {
           const el = container.querySelector('[data-row-key="' + key + '"]');
           if (el) { el.textContent = text; el.style.color = color; }
@@ -1535,7 +1534,7 @@
 
     function connectWebSocket() {
       closeWebSocket();
-      lastAppliedPollMs = -1; // ensure push-rate config is (re)sent on open
+      lastAppliedPollMs = -1;
       const wsUrl = BASE_URL.replace(/^http/, 'ws') + '/ws';
       ws = new WebSocket(wsUrl);
 
@@ -1625,8 +1624,6 @@
         if (!wsReconnectTimer) connectWebSocket();
       }
 
-      // Clear struct keys so this settings-triggered render always does a full rebuild,
-      // ensuring font sizes and layout are re-applied from current iCUE property values.
       ['view-pins', 'view-temperatures', 'view-power', 'view-faults'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) { el.dataset.pinStructKey = ''; el.dataset.tempStructKey = ''; el.dataset.powerStructKey = ''; el.dataset.faultStructKey = ''; }
@@ -1638,19 +1635,17 @@
     async function onIcueInitialized() {
       setState('loading', 'Loading');
       await fetchConfigFallback();
-      fetchDeviceConfig(); // fire-and-forget; cached in deviceConfig for config page
-      await onIcueDataUpdated(); // opens WebSocket for live data
+      fetchDeviceConfig();
+      await onIcueDataUpdated();
     }
 
     if (typeof iCUE_initialized !== 'undefined' && iCUE_initialized) {
       onIcueInitialized();
     } else {
       setState('loading', 'Loading');
-      onIcueDataUpdated(); // opens WebSocket for live data
+      onIcueDataUpdated();
     }
 
-    // Config overlay trigger: double-tap (default) or long-press.
-    // Mode is read at runtime from the 'configShortcut' iCUE property so changes take effect immediately.
     (function () {
       var lastTapTime = 0;
       var lpTimer = null;

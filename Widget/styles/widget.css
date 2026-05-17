@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   touch-action: none;
 }
 
@@ -6,8 +7,8 @@ html, body {
   --layout-unit: 1vmin;
   --device-vertical-s-unit: 4.16px;
   --preview-vertical-s-unit: calc(100vw * 416 / 69600);
-  --device-h-s-unit: 3.44px;           /* 840×344: vmin = 3.44px */
-  --preview-h-s-unit: calc(100vw * 344 / 84000); /* aspect-corrected for H preview cards */
+  --device-h-s-unit: 3.44px;
+  --preview-h-s-unit: calc(100vw * 344 / 84000);
 
   --space-xs: calc(var(--layout-unit) * 1.6);
   --space-sm: calc(var(--layout-unit) * 2.4);
@@ -37,14 +38,17 @@ html, body {
   --red: #ff5e5e;
 }
 
-/* ── Xeneon Edge horizontal slot calibration ── */
-/* S-H (840×344): vmin already equals --device-h-s-unit; pin explicitly */
 @media (min-width: 820px) and (max-width: 860px) and (max-height: 360px) {
-  :root { --layout-unit: var(--device-h-s-unit); }
+  :root {
+    --layout-unit: var(--device-h-s-unit);
+  }
 }
+
 /* iCUE preview card: small viewport with wide aspect ratio */
 @media (max-width: 700px) and (min-aspect-ratio: 2) {
-  :root { --layout-unit: var(--preview-h-s-unit); }
+  :root {
+    --layout-unit: var(--preview-h-s-unit);
+  }
 }
 
 * {
@@ -189,7 +193,7 @@ body {
   gap: var(--space-sm);
 }
 
-.pin-footer > .pin-imbalance {
+.pin-footer>.pin-imbalance {
   margin-left: auto;
   margin-top: 0;
 }
@@ -294,7 +298,6 @@ body {
   font-size: var(--font-sm);
 }
 
-/* bar chart — pins and temperatures */
 #view-pins.view-panel.active,
 #view-temperatures.view-panel.active {
   display: flex;
@@ -514,9 +517,17 @@ body {
   vertical-align: middle;
 }
 
-.legend-v { background: #f5d033; }
-.legend-a { background: #ff5e5e; }
-.legend-w { background: #ff8c2a; }
+.legend-v {
+  background: #f5d033;
+}
+
+.legend-a {
+  background: #ff5e5e;
+}
+
+.legend-w {
+  background: #ff8c2a;
+}
 
 .barchart {
   display: flex;
@@ -569,12 +580,29 @@ body {
   min-height: 3px;
 }
 
-.bar-v         { background: #f5d033; }
-.bar-a         { background: #ff5e5e; }
-.bar-w         { background: #ff8c2a; }
-.bar-temp      { background: var(--accent-color); }
-.pin-bar-fill  { background: var(--accent-color); }
-.bar-temp-warn { background: var(--red); }
+.bar-v {
+  background: #f5d033;
+}
+
+.bar-a {
+  background: #ff5e5e;
+}
+
+.bar-w {
+  background: #ff8c2a;
+}
+
+.bar-temp {
+  background: var(--accent-color);
+}
+
+.pin-bar-fill {
+  background: var(--accent-color);
+}
+
+.bar-temp-warn {
+  background: var(--red);
+}
 
 .bar-val {
   font-size: max(9px, var(--font-xs));
@@ -600,7 +628,6 @@ body {
   line-height: 1.2;
 }
 
-/* ── Faults view ── */
 #view-faults.view-panel.active {
   gap: var(--space-xs);
 }
@@ -708,7 +735,6 @@ button.fault-badge:active {
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* ── Power view ── */
 #view-power.view-panel.active .row-item {
   flex: 1;
   min-height: 0;
@@ -726,6 +752,7 @@ button.fault-badge:active {
 }
 
 @media (max-height: 380px) {
+
   .row-value,
   .fault-state,
   .value {
@@ -740,25 +767,22 @@ button.fault-badge:active {
   }
 }
 
-/* ── Multi-panel layout (L and XL slots) ── */
 
-/* Switch content-area to flex so multiple panels share space */
 [data-layout="lg"] .content-area,
 [data-layout="xl"] .content-area {
   display: flex;
-  flex-direction: column; /* vertical stacking by default (portrait/vertical slots) */
+  flex-direction: column;
   gap: var(--space-sm);
 }
 
-/* Horizontal slots (L-H ≥1688px, XL-H ≥2536px): panels side by side */
 @media (min-width: 1600px) {
+
   [data-layout="lg"] .content-area,
   [data-layout="xl"] .content-area {
     flex-direction: row;
   }
 }
 
-/* Each active panel shares available space equally */
 [data-layout="lg"] .view-panel.active,
 [data-layout="xl"] .view-panel.active {
   flex: 1;
@@ -768,14 +792,12 @@ button.fault-badge:active {
   min-height: 0;
 }
 
-/* Config overlay: 50% width centered on multi-panel layouts */
 [data-layout="lg"] #config-overlay,
 [data-layout="xl"] #config-overlay {
   left: 25%;
   right: 25%;
 }
 
-/* ── Config overlay ── */
 #config-overlay {
   position: fixed;
   inset: 0;
@@ -796,7 +818,6 @@ button.fault-badge:active {
   transform: translateY(0);
 }
 
-/* ── Fault details overlay ── */
 #fault-details-overlay {
   position: fixed;
   left: 0;
@@ -1064,7 +1085,6 @@ button.fault-badge:active {
   padding: var(--space-lg);
 }
 
-/* ── Warning banner ── */
 #warn-banner {
   position: fixed;
   top: 0;
@@ -1181,7 +1201,6 @@ button.fault-badge:active {
   white-space: nowrap;
 }
 
-/* ── Imbalance threshold line ── */
 .pin-imbalance-threshold-line {
   height: 2px !important;
   background: rgba(255, 255, 255, 0.55) !important;

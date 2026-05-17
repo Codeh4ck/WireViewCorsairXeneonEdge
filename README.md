@@ -8,6 +8,7 @@ An integration system for the WireView Pro 2, which enables the creation of Cors
 > This integration can run alongside the official WireView Pro 2 application, but both compete for the same device mutex. This, rarely, has two practical consequences:
 >
 > - **Launch order matters.** Always start the official WireView Pro 2 application first, and only then start the background service (or reboot the PC with the service already installed). If the service acquires the mutex first, the WireView Pro 2 application will launch but might not display any sensor data.
+>
 > - **If either application hangs or stops updating**, the most likely cause is a stale mutex held by the background service. To release it, restart the service from within the widget: **double-tap or long-press** the widget → **Device Configuration** → scroll to the bottom → **Restart service**. This terminates and restarts the background service, releasing the mutex and allowing both applications to resume normal operation.
 
 Keep in mind that it's in my immediate plans to implement a way to timeout the mutex hold thus, avoiding this issue entirely. For the time being, refer to the guide above in case you encounter any freezes on either application.
@@ -46,26 +47,15 @@ The service also reads the current device configuration from the WireView Pro 2,
 
 Sensor data and device configuration are served over a lightweight local HTTP server (Kestrel) on `localhost:59273`. The following endpoints are available:
 
-`GET /config`
-Returns the current service configuration. The only configurable parameter is the sensor polling interval.
-
-`POST /config`
-Updates the service configuration. Changes take effect immediately.
-
-`GET /sensors`
-Returns a snapshot of the most recently polled sensor values. Freshness depends on the configured polling interval.
-
-`GET /device/config`
-Returns the full device configuration as read from the WireView Pro 2.
-
-`POST /faults/clear`
-Clears one or more fault status bits on the device. The request body specifies which status and log bits to clear independently, allowing individual fault acknowledgement.
-
-`POST /restart`
-Gracefully restarts the background service. Useful for releasing the device mutex when running alongside the official WireView Pro 2 application.
-
-`WebSocket /ws`
-Pushes sensor data to all connected subscribers in real time, at the configured polling interval. Supports multiple simultaneous connections.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/config` | Returns the current service configuration. The only configurable parameter is the sensor polling interval. |
+| `POST` | `/config` | Updates the service configuration. Changes take effect immediately. |
+| `GET` | `/sensors` | Returns a snapshot of the most recently polled sensor values. Freshness depends on the configured polling interval. |
+| `GET` | `/device/config` | Returns the full device configuration as read from the WireView Pro 2. |
+| `POST` | `/faults/clear` | Clears one or more fault status bits on the device. The request body specifies which status and log bits to clear independently, allowing individual fault acknowledgement. |
+| `POST` | `/restart` | Gracefully restarts the background service. Useful for releasing the device mutex when running alongside the official WireView Pro 2 application. |
+| `WebSocket` | `/ws` | Pushes sensor data to all connected subscribers in real time, at the configured polling interval. Supports multiple simultaneous connections. |
 
 The included Corsair Xeneon Edge widget connects to `/ws` on startup and renders incoming data in real time. All widget-side features are described in the section below.
 
