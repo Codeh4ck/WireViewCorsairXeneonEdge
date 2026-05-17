@@ -384,7 +384,9 @@ Desktop.ini
 Widget/docs/
 Widget/evals/
 Widget/references/
-Widget/skills.md
+Widget/skill.md
+Widget/MEMORY.md
+Widget/.claude/
 Widget/project_widget_tech.md
 Widget/project_widget_views.md
 Widget/project_wireview_widget.md
