@@ -1,0 +1,21 @@
+{
+  "author": "Nikolas Andreou",
+  "id": "com.nikolasandreou.wireviewpro2",
+  "name": "WireView Pro 2",
+  "description": "WireView Pro 2 live telemetry for Corsair Xeneon Edge.",
+  "version": "1.0.0",
+  "preview_icon": "resources/icon.png",
+  "min_framework_version": "1.0.0",
+  "os": [
+    {
+      "platform": "windows"
+    }
+  ],
+  "supported_devices": [
+    {
+      "type": "dashboard_lcd",
+      "features": ["sensor-screen"]
+    }
+  ],
+  "interactive": true
+}

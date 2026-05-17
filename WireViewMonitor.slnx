@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="WireViewMonitor.Core/WireViewMonitor.Core.csproj" />
+  <Project Path="WireViewMonitor.Contracts/WireViewMonitor.Contracts.csproj" />
+  <Project Path="WireViewMonitor.Service/WireViewMonitor.Service.csproj" />
+  <Project Path="WireViewMonitor.TestConsole/WireViewMonitor.TestConsole.csproj" />
 </Solution>

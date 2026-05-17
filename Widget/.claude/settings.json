@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Projects/Playground/WireViewMonitor/WireViewMonitor.Service/**)",
+      "Read(//c/Users/Nikolas/.claude/projects/c--Projects-Playground-WireViewMonitor/memory/**)",
+      "Bash(find \"c:/Projects/Playground/WireViewMonitor\" -name \"skills.md\" 2>/dev/null)",
+      "Read(//c/Projects/Playground/WireViewMonitor/**)",
+      "Bash(python3 -)",
+      "Bash(node -e ' *)",
+      "Bash(where icuewidget *)",
+      "Bash(icuewidget --help)",
+      "Bash(icuewidget package *)",
+      "Bash(\"C:\\\\Users\\\\Nikolas\\\\AppData\\\\Local\\\\Programs\\\\iCUEWidgetCLI\\\\bin\\\\icuewidget.exe\" package *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Nikolas\\.claude\\projects\\c--Projects-Playground-WireViewMonitor\\memory",
+      "c:\\Projects\\Playground\\WireViewMonitor"
+    ]
+  }
+}
