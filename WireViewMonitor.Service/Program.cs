@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using WireViewMonitor.Contracts.Input;
@@ -28,6 +27,7 @@ builder.Services
     .AddSingleton<WebSocketService>()
     .AddSingleton<ConfigStore>()
     .AddHostedService<WireViewService>()
+    .AddHostedService<WireViewAppWatcherService>()
     .AddCors(o => o.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 builder.WebHost.ConfigureKestrel(k =>
