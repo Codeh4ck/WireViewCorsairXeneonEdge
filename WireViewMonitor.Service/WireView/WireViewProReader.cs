@@ -9,9 +9,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 {
     private const int Baud = 115200;
     private const int StructSize = 100;
-    private const int ReadTimeoutMs = 1000;
     private const string WelcomeString = "Thermal Grizzly WireView Pro II"; // 31 chars + \0 = 32 bytes
-    private const int DefaultPollMs = 1_000;
+    
+    private const int DefaultPollMs = 500;
+    private const int ReadTimeoutMs = 500;
 
     private const int OffTs = 0;
     private const int OffReadings = 12;
@@ -33,7 +34,11 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     private SharedSerialPort? _port;
     private CancellationTokenSource? _cts;
     private Task? _worker;
+    
     private volatile int _pollIntervalMs = DefaultPollMs;
+    private volatile bool _yieldingToWireViewApp;
+    
+    private bool _handshakeComplete;
 
     public int PollIntervalMs
     {
@@ -54,7 +59,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return;
         }
 
-        _pollIntervalMs = Math.Clamp(pollIntervalMs, 100, 30_000);
+        _pollIntervalMs = Math.Clamp(pollIntervalMs, 100, 30000);
         _cts = new CancellationTokenSource();
         _worker = Task.Run(() => LoopAsync(_cts.Token));
     }
@@ -85,6 +90,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
         }
 
         _port = null;
+        _handshakeComplete = false;
     }
 
     private async Task LoopAsync(CancellationToken token)
@@ -93,6 +99,12 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         while (!token.IsCancellationRequested)
         {
+            if (_yieldingToWireViewApp)
+            {
+                await Task.Delay(100, token);
+                continue;
+            }
+            
             var portName = FindComPort();
 
             if (portName is null)
@@ -164,21 +176,29 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         lock (_port)
         {
-            _port.Open();
-            _port.DiscardInBuffer();
-
-            if (!Handshake(_port))
+            if (!_port.Open())
             {
                 return null;
+            }
+
+            if (!_handshakeComplete)
+            {
+                if (!Handshake(_port))
+                {
+                    _port.Close();
+                    return null;
+                }
+
+                _handshakeComplete = true;
             }
 
             _port.DiscardInBuffer();
             _port.Write([CmdReadSensors], 0, 1);
 
-            var buf = ReadExact(_port, StructSize);
+            var buffer = ReadExact(_port, StructSize);
             _port.Close();
 
-            return buf is null ? null : Parse(buf);
+            return buffer is null ? null : Parse(buffer);
         }
     }
 
@@ -194,11 +214,15 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
         {
             lock (_port)
             {
-                var portIsOpen = _port.Open();
+                if (!_port.Open())
+                {
+                    return;
+                }
+                
                 _port.DiscardInBuffer();
 
                 _port.Write([
-                    (byte) 14,
+                    14,
                     (byte) (faultStatusMask & byte.MaxValue),
                     (byte) (faultStatusMask >> 8 & byte.MaxValue),
                     (byte) (faultLogMask & byte.MaxValue),
@@ -227,9 +251,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             {
                 _port.Open();
                 _port.DiscardInBuffer();
-
+                
                 if (!Handshake(_port))
                 {
+                    _port.Close();
                     return null;
                 }
 
@@ -294,6 +319,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
                 if (!Handshake(_port))
                 {
+                    _port.Close();
                     return null;
                 }
 
@@ -348,7 +374,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         port.DiscardInBuffer();
         port.RtsEnable = true;
-        port.Write(Array.Empty<byte>(), 0, 0);
+        port.Write([], 0, 0);
 
         var buf = ReadExact(port, responseSize);
         port.RtsEnable = false;
@@ -478,6 +504,29 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             FaultSoftPowerEnable = faultSoftPowerEnable,
             FaultHardPowerEnable = faultHardPowerEnable
         };
+    }
+    
+    public async Task YieldToWireViewAsync(int yieldMs, CancellationToken token)
+    {
+        if (_yieldingToWireViewApp)
+        {
+            return;
+        }
+
+        _yieldingToWireViewApp = true;
+        logger.LogInformation("Yielding to WireView Pro 2 app for {Ms}ms", yieldMs);
+
+        DisposePort();
+
+        try
+        {
+            await Task.Delay(yieldMs, token);
+        }
+        finally
+        {
+            _yieldingToWireViewApp = false;
+            logger.LogInformation("Yield complete. Resuming normal polling...");
+        }
     }
 
     private static short ReadI16(byte[] b, int o) => (short)(b[o] | b[o + 1] << 8);
