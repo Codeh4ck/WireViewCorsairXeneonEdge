@@ -4,18 +4,12 @@ $DisplayName  = "WireView Sensor Service"
 $Description  = "Reads WireView Pro 2 sensors and exposes them on http://localhost:59273"
 $InstallDir   = "$env:ProgramFiles\WireViewSensorService"
 $ExeName      = "WireViewMonitor.Service.exe"
-$DllName      = "aspnetcorev2_inprocess.dll"
 $ExeSource    = Join-Path $PSScriptRoot $ExeName
 $DllSource    = Join-Path $PSScriptRoot $DllName
 $ExeDest      = Join-Path $InstallDir $ExeName
 # ── Validate ──────────────────────────────────────────────────────────────────
 if (-not (Test-Path $ExeSource)) {
     Write-Error "$ExeName not found. Please redownload the installation package and make sure you have extracted all files. Aborting..."
-    exit 1
-}
- 
-if (-not (Test-Path $DllSource)) {
-    Write-Error "$DllName not found. Please redownload the installation package and make sure you have extracted all files. Aborting..."
     exit 1
 }
 # ── Stop and remove existing installation ────────────────────────────────────
