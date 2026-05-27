@@ -1,6 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using WireViewMonitor.Contracts.Input;
 using WireViewMonitor.Contracts.Output;
 using WireViewMonitor.Service;
@@ -19,6 +20,11 @@ builder.Logging
         s.SourceName = "WireViewSensorService";
         s.Filter = (_, level) => level >= LogLevel.Warning;
     });
+
+if (!WindowsServiceHelpers.IsWindowsService())
+{
+    builder.Logging.AddConsole();
+}
 
 builder.Services
     .ConfigureHttpJsonOptions(o => o.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonContext.Default))
