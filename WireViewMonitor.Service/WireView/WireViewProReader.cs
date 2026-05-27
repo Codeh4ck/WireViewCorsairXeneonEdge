@@ -10,9 +10,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     private const int Baud = 115200;
     private const int StructSize = 100;
     private const string WelcomeString = "Thermal Grizzly WireView Pro II"; // 31 chars + \0 = 32 bytes
-    
+
     private const int DefaultPollMs = 500;
     private const int ReadTimeoutMs = 500;
+    private const int LockTimeoutMs = 1000;
 
     private const int OffTs = 0;
     private const int OffReadings = 12;
@@ -34,10 +35,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     private SharedSerialPort? _port;
     private CancellationTokenSource? _cts;
     private Task? _worker;
-    
+
     private volatile int _pollIntervalMs = DefaultPollMs;
     private volatile bool _yieldingToWireViewApp;
-    
+
     private bool _handshakeComplete;
 
     public int PollIntervalMs
@@ -83,7 +84,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
     private void DisposePort()
     {
-        try { _port?.Dispose(); }
+        try
+        {
+            _port?.Dispose();
+        }
         catch
         {
             // ignored
@@ -104,7 +108,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
                 await Task.Delay(100, token);
                 continue;
             }
-            
+
             var portName = FindComPort();
 
             if (portName is null)
@@ -174,7 +178,13 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
-        lock (_port)
+        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        {
+            logger.LogWarning("Could not acquire port lock on {Port}, skipping poll", PortName);
+            return null;
+        }
+
+        try
         {
             if (!_port.Open())
             {
@@ -200,6 +210,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
             return buffer is null ? null : Parse(buffer);
         }
+        finally
+        {
+            Monitor.Exit(_port);
+        }
     }
 
     public void ClearFaults(ushort faultStatusMask = 0xFFFF, ushort faultLogMask = 0xFFFF)
@@ -210,31 +224,38 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return;
         }
 
+        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        {
+            logger.LogWarning("Could not acquire port lock on {Port}, skipping fault clear", PortName);
+            return;
+        }
+
         try
         {
-            lock (_port)
+            if (!_port.Open())
             {
-                if (!_port.Open())
-                {
-                    return;
-                }
-                
-                _port.DiscardInBuffer();
-
-                _port.Write([
-                    14,
-                    (byte) (faultStatusMask & byte.MaxValue),
-                    (byte) (faultStatusMask >> 8 & byte.MaxValue),
-                    (byte) (faultLogMask & byte.MaxValue),
-                    (byte) (faultLogMask >> 8 & byte.MaxValue)
-                ], 0, 5);
-
-                _port.Close();
+                return;
             }
+
+            _port.DiscardInBuffer();
+
+            _port.Write([
+                14,
+                (byte)(faultStatusMask & byte.MaxValue),
+                (byte)(faultStatusMask >> 8 & byte.MaxValue),
+                (byte)(faultLogMask & byte.MaxValue),
+                (byte)(faultLogMask >> 8 & byte.MaxValue)
+            ], 0, 5);
+
+            _port.Close();
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to clear faults on {Port}", PortName);
+        }
+        finally
+        {
+            Monitor.Exit(_port);
         }
     }
 
@@ -245,61 +266,68 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
+        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        {
+            logger.LogWarning("Could not acquire port lock on {Port}, skipping config read", PortName);
+            return null;
+        }
+
         try
         {
-            lock (_port)
+            _port.Open();
+            _port.DiscardInBuffer();
+
+            if (!Handshake(_port))
             {
-                _port.Open();
-                _port.DiscardInBuffer();
-                
-                if (!Handshake(_port))
-                {
-                    _port.Close();
-                    return null;
-                }
-
-                // Read first 4 bytes to determine config version (version is at byte index 2)
-                _port.DiscardInBuffer();
-                _port.Write([CmdReadConfig], 0, 1);
-                var versionBuf = ReadExact(_port, 4);
-
                 _port.Close();
-
-                if (versionBuf is null)
-                {
-                    return null;
-                }
-
-                int version = versionBuf[2];
-
-                int structSize = version switch
-                {
-                    0 => ConfigV1Size,
-                    1 => ConfigV2Size,
-                    2 => ConfigV3Size,
-                    _ => 0
-                };
-
-                if (structSize == 0)
-                {
-                    return null;
-                }
-
-                // Full read with correct size
-                _port.Open();
-                _port.DiscardInBuffer();
-                _port.Write([CmdReadConfig], 0, 1);
-
-                var buffer = ReadExact(_port, structSize);
-                _port.Close();
-
-                return buffer is null ? null : ParseConfig(buffer, version);
+                return null;
             }
+
+            // Read first 4 bytes to determine config version (version is at byte index 2)
+            _port.DiscardInBuffer();
+            _port.Write([CmdReadConfig], 0, 1);
+            var versionBuf = ReadExact(_port, 4);
+
+            _port.Close();
+
+            if (versionBuf is null)
+            {
+                return null;
+            }
+
+            var version = versionBuf[2];
+
+            var structSize = version switch
+            {
+                0 => ConfigV1Size,
+                1 => ConfigV2Size,
+                2 => ConfigV3Size,
+                _ => 0
+            };
+
+            if (structSize == 0)
+            {
+                return null;
+            }
+
+            // Full read with correct size
+            _port.Open();
+            _port.DiscardInBuffer();
+            _port.Write([CmdReadConfig], 0, 1);
+
+            var buffer = ReadExact(_port, structSize);
+            _port.Close();
+
+            return buffer is null ? null : ParseConfig(buffer, version);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to read config on {Port}", PortName);
             return null;
+        }
+        finally
+        {
+            Monitor.Exit(_port);
         }
     }
 
@@ -310,61 +338,68 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
+        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        {
+            logger.LogWarning("Could not acquire port lock on {Port}, skipping raw config read", PortName);
+            return null;
+        }
+
         try
         {
-            lock (_port)
+            _port.Open();
+            _port.DiscardInBuffer();
+
+            if (!Handshake(_port))
             {
-                _port.Open();
-                _port.DiscardInBuffer();
-
-                if (!Handshake(_port))
-                {
-                    _port.Close();
-                    return null;
-                }
-
-                // Read first 4 bytes to determine config version (version is at byte index 2)
-                _port.DiscardInBuffer();
-                _port.Write([CmdReadConfig], 0, 1);
-                var versionBuf = ReadExact(_port, 4);
-
                 _port.Close();
-
-                if (versionBuf is null)
-                {
-                    return null;
-                }
-
-                int version = versionBuf[2];
-
-                int structSize = version switch
-                {
-                    0 => ConfigV1Size,
-                    1 => ConfigV2Size,
-                    2 => ConfigV3Size,
-                    _ => 0
-                };
-
-                if (structSize == 0)
-                {
-                    return null;
-                }
-
-                // Full read with correct size
-                _port.Open();
-                _port.DiscardInBuffer();
-                _port.Write([CmdReadConfig], 0, 1);
-
-                var buffer = ReadExact(_port, structSize);
-                _port.Close();
-
-                return buffer;
+                return null;
             }
+
+            // Read first 4 bytes to determine config version (version is at byte index 2)
+            _port.DiscardInBuffer();
+            _port.Write([CmdReadConfig], 0, 1);
+            var versionBuf = ReadExact(_port, 4);
+
+            _port.Close();
+
+            if (versionBuf is null)
+            {
+                return null;
+            }
+
+            var version = versionBuf[2];
+
+            var structSize = version switch
+            {
+                0 => ConfigV1Size,
+                1 => ConfigV2Size,
+                2 => ConfigV3Size,
+                _ => 0
+            };
+
+            if (structSize == 0)
+            {
+                return null;
+            }
+
+            // Full read with correct size
+            _port.Open();
+            _port.DiscardInBuffer();
+            _port.Write([CmdReadConfig], 0, 1);
+
+            var buffer = ReadExact(_port, structSize);
+            _port.Close();
+
+            return buffer;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to read raw config on {Port}", PortName);
             return null;
+        }
+        finally
+        {
+            Monitor.Exit(_port);
         }
     }
 
@@ -399,6 +434,10 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             if (port.BytesToRead > 0)
             {
                 offset += port.Read(buffer, offset, size - offset);
+            }
+            else
+            {
+                Thread.Sleep(1); // yield CPU instead of spinning
             }
         }
 
@@ -505,7 +544,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             FaultHardPowerEnable = faultHardPowerEnable
         };
     }
-    
+
     public async Task YieldToWireViewAsync(int yieldMs, CancellationToken token)
     {
         if (_yieldingToWireViewApp)
