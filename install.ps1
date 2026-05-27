@@ -6,7 +6,7 @@ $InstallDir   = "$env:ProgramFiles\WireViewSensorService"
 $ExeName      = "WireViewMonitor.Service.exe"
 $DllName      = "aspnetcorev2_inprocess.dll"
 $ExeSource    = Join-Path $PSScriptRoot $ExeName
-$DllSource    = Join-Path $PSScriptRoot $DllName
+# $DllSource    = Join-Path $PSScriptRoot $DllName
 $ExeDest      = Join-Path $InstallDir $ExeName
 # ── Validate ──────────────────────────────────────────────────────────────────
 if (-not (Test-Path $ExeSource)) {
@@ -33,7 +33,7 @@ if ($existing) {
 Write-Host "Installing to $InstallDir ..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Copy-Item -Path $ExeSource -Destination $ExeDest -Force
-Copy-Item -Path $DllSource -Destination $InstallDir -Force
+# Copy-Item -Path $DllSource -Destination $InstallDir -Force
 Write-Host "Registering service..."
 sc.exe create $ServiceName binPath= `"$ExeDest`" start= auto DisplayName= `"$DisplayName`" | Out-Null
 sc.exe description $ServiceName $Description | Out-Null
