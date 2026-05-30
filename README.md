@@ -13,6 +13,10 @@ An integration system for the WireView Pro 2, which enables the creation of Cors
 
 Keep in mind that it's in my immediate plans to implement a way to timeout the mutex hold thus, avoiding this issue entirely. For the time being, refer to the guide above in case you encounter any freezes on either application.
 
+## Screenshot
+
+![WireView Pro 2 widget](https://i.ibb.co/4RvdG3R9/Screenshot-2026-05-30-165204.png)
+
 # Why does this exist?
 
 This integration was built out of a desire to display WireView Pro 2 sensor readings, particularly per-pin currents for an RTX 5090, on a Corsair Xeneon Edge monitor. The official WireView Pro 2 application works well, but running it on a secondary monitor in portrait orientation caused portions of the UI to be clipped, and dedicating screen real estate to it meant losing space that could be used more productively. The Xeneon Edge, sitting directly in the line of sight, is a natural fit for this kind of at-a-glance telemetry.
