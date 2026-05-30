@@ -220,7 +220,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     {
         if (_port is null)
         {
-            logger.LogWarning("Cannot clear faults — no port available");
+            logger.LogWarning("Cannot clear faults - no port available");
             return;
         }
 
