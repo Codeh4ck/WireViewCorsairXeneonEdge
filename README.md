@@ -143,9 +143,14 @@ The following features are present in the official WireView Pro 2 application bu
 
 - **Firmware updates:** Delivering firmware to the device over USB is technically possible but is not planned. Use the official WireView Pro 2 application for firmware updates. High risk of bricking in case of faulty implementation and practically unable to test it without risk.
 
+## Acknowledgements
+- [LibreHardWareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) - WireView Pro 2 polling code
+- [WireViewDeviceLib](https://github.com/ElmorLabs-ThermalGrizzly/WireViewDeviceLib) - ElmorLabs / Thermal Grizzly official library
+- [
+
 ## Disclaimer
 
-The WireView Pro 2 device and the WireView Pro 2 software application are products of **Thermal Grizzly**. All associated trademarks, intellectual property, and copyrights remain the property of Thermal Grizzly. This project is entirely independent and is not affiliated with, endorsed by, or produced in cooperation with Thermal Grizzly in any way.
+The WireView Pro 2 device and the WireView Pro 2 software application are products of **Thermal Grizzly**. All associated trademarks, intellectual property, and copyrights remain the property of Thermal Grizzly. This project is entirely independent and is not affiliated with, endorsed by, or produced in cooperation with Thermal Grizzly or ElmorLabs in any way.
 
 This integration was developed through personal research and reverse engineering for private use, and is provided free of charge. No warranties, **expressed or implied**, are offered. Use it at your own risk.
 
