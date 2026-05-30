@@ -150,7 +150,6 @@ The following features are present in the official WireView Pro 2 application bu
 ## Acknowledgements
 - [LibreHardWareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) - WireView Pro 2 polling code
 - [WireViewDeviceLib](https://github.com/ElmorLabs-ThermalGrizzly/WireViewDeviceLib) - ElmorLabs / Thermal Grizzly official library
-- [
 
 ## Disclaimer
 
