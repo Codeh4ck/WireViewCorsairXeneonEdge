@@ -1,0 +1,1358 @@
+/* ============================================================
+   WireView Pro 2 — HUD Edition
+   Corsair Xeneon Edge (840×344) iCUE Widget Stylesheet
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   1. CSS CUSTOM PROPERTIES
+   ---------------------------------------------------------- */
+
+:root {
+  /* Scaling units */
+  --layout-unit: 1vmin;
+  --device-vertical-s-unit: 4.16px;
+  --preview-vertical-s-unit: calc(100vw * 416 / 69600);
+  --device-h-s-unit: 3.44px;
+  --preview-h-s-unit: calc(100vw * 344 / 84000);
+
+  /* Spacing scale */
+  --space-xs: calc(var(--layout-unit) * 1.6);
+  --space-sm: calc(var(--layout-unit) * 2.4);
+  --space-md: calc(var(--layout-unit) * 3.2);
+  --space-lg: calc(var(--layout-unit) * 4.2);
+
+  /* Border radius */
+  --radius-sm: calc(var(--layout-unit) * 0.9);
+  --radius-md: calc(var(--layout-unit) * 2.5);
+  --radius-lg: calc(var(--layout-unit) * 3.4);
+
+  /* Font scale */
+  --font-xs: calc(var(--layout-unit) * 2.7);
+  --font-sm: calc(var(--layout-unit) * 3.2);
+  --font-md: calc(var(--layout-unit) * 4.2);
+  --font-lg: calc(var(--layout-unit) * 5.8);
+
+  /* Pin-specific spacing */
+  --pin-top-space: calc(var(--layout-unit) * 3.6);
+  --pin-bottom-space: calc(var(--layout-unit) * 2.6);
+  --pin-slot-gap: calc(var(--layout-unit) * 0.6);
+
+  /* Core colors */
+  --text-color: #e7edf5;
+  --accent-color: #4dd0a8;
+  --background-color: #070b12;
+  --background-opacity: 1;
+  --background-brightness: 1;
+  --glass-blur: 0px;
+
+  /* Semantic colors */
+  --green: #3adb9d;
+  --amber: #e8a848;
+  --red: #ff5e5e;
+
+  /* HUD-specific variables */
+  --glow-color: rgba(77, 208, 168, 0.45);
+  --grid-color: rgba(77, 208, 168, 0.03);
+  --border-glow: rgba(77, 208, 168, 0.2);
+
+  /* Typography */
+  --widget-font: Consolas, "Courier New", monospace;
+}
+
+/* ----------------------------------------------------------
+   2. MEDIA QUERIES — Layout Unit Overrides
+   ---------------------------------------------------------- */
+
+@media (min-width: 820px) and (max-width: 860px) and (max-height: 360px) {
+  :root {
+    --layout-unit: var(--device-h-s-unit);
+  }
+}
+
+@media (max-width: 700px) and (min-aspect-ratio: 2) {
+  :root {
+    --layout-unit: var(--preview-h-s-unit);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --layout-unit: var(--device-vertical-s-unit);
+  }
+
+  .widget-root {
+    padding: var(--space-lg);
+  }
+}
+
+@media (max-height: 380px) {
+  .row-value,
+  .fault-state,
+  .value {
+    font-size: max(12px, var(--font-sm));
+  }
+}
+
+/* ----------------------------------------------------------
+   3. RESET & BASE
+   ---------------------------------------------------------- */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  touch-action: none;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--widget-font);
+  color: var(--text-color);
+  background: transparent;
+}
+
+/* ----------------------------------------------------------
+   4. WIDGET ROOT & LAYERS
+   ---------------------------------------------------------- */
+
+.widget-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  isolation: isolate;
+}
+
+.background-layer {
+  position: absolute;
+  inset: 0;
+  background-color: var(--background-color);
+  opacity: var(--background-opacity);
+  filter: brightness(var(--background-brightness));
+  z-index: -3;
+}
+
+.glass-layer {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(var(--glass-blur));
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  z-index: -2;
+}
+
+.content-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ----------------------------------------------------------
+   5. VIEW PANELS
+   ---------------------------------------------------------- */
+
+.view-panel {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: var(--space-xs);
+  gap: var(--space-sm);
+}
+
+.view-panel.active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#view-pins.view-panel.active,
+#view-temperatures.view-panel.active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* State overlay */
+.state-panel {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: rgba(2, 4, 7, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--red);
+  padding: var(--space-md);
+}
+
+.state-panel.active {
+  display: flex;
+}
+
+/* ----------------------------------------------------------
+   6. PINS VIEW
+   ---------------------------------------------------------- */
+
+.pins-chart-wrap {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: calc(var(--layout-unit) * 14) 1fr;
+  gap: var(--space-xs);
+}
+
+.pins-chart-wrap.no-axis {
+  grid-template-columns: 1fr;
+}
+
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: var(--space-xs);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: calc(var(--pin-bottom-space) + var(--pin-slot-gap));
+  margin-bottom: calc(var(--pin-top-space) + var(--pin-slot-gap));
+}
+
+.y-tick {
+  font-size: max(10px, var(--font-xs));
+  font-weight: 700;
+  opacity: 0.78;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pins-chart {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-xs);
+  min-height: 0;
+  position: relative;
+}
+
+.pin-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pin-track {
+  flex: 1;
+  min-height: 0;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.pin-track.no-track-bg {
+  background: none;
+}
+
+.pin-label {
+  font-size: max(9px, var(--font-xs));
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.72;
+  height: var(--pin-bottom-space);
+  margin-bottom: calc(var(--pin-slot-gap) * 2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-val {
+  font-size: max(11px, var(--font-sm));
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  height: var(--pin-top-space);
+  margin-top: var(--pin-slot-gap);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pin-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--accent-color);
+  transition: height 0.35s ease;
+  min-height: 3px;
+}
+
+.bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.35s ease;
+  min-height: 3px;
+}
+
+/* Grid overlay lines */
+.pins-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.pin-grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--text-color);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.pin-imbalance-threshold-line {
+  height: 2px !important;
+  background: var(--accent-color) !important;
+  border-top: 1px dashed var(--accent-color);
+  opacity: 0.6;
+}
+
+/* Pin footer */
+.pin-footer {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+  gap: var(--space-sm);
+}
+
+.pin-footer > .pin-imbalance {
+  margin-left: auto;
+  margin-top: 0;
+}
+
+.pin-imbalance {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+}
+
+.pin-imbalance-label-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pin-imbalance-title {
+  font-size: max(9px, var(--font-xs));
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.pin-imbalance-detail {
+  font-size: max(9px, var(--font-xs));
+  font-weight: 700;
+  opacity: 0.5;
+}
+
+.pin-imbalance-value {
+  font-size: max(11px, var(--font-sm));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pin power values */
+.pin-power-values {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--layout-unit) * 0.8);
+  flex-shrink: 0;
+}
+
+.ppv-pair {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--layout-unit) * 0.4);
+}
+
+.ppv-label {
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.ppv-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ppv-sep {
+  opacity: 0.3;
+}
+
+/* Pin temps in footer */
+.pin-temps {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ----------------------------------------------------------
+   7. TEMPERATURE VIEW (GAUGES)
+   ---------------------------------------------------------- */
+
+.gauge-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-sm);
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.gauge-cell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gauge-unit-text {
+  opacity: 0.7;
+}
+
+.gauge-value-text {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-label-text {
+  opacity: 0.65;
+}
+
+/* ----------------------------------------------------------
+   8. POWER VIEW
+   ---------------------------------------------------------- */
+
+.row-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--background-color) 88%, white 12%);
+}
+
+#view-power.view-panel.active .row-item {
+  flex: 1;
+  min-height: 0;
+}
+
+.row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.row-label,
+.fault-label {
+  font-size: var(--font-sm);
+  opacity: 0.82;
+}
+
+.row-value,
+.fault-state {
+  font-size: var(--font-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.row-value.warn {
+  color: var(--red);
+}
+
+.peak-value {
+  font-size: var(--font-xs);
+  opacity: 0.55;
+  margin-left: var(--space-xs);
+}
+
+/* Load bars */
+.load-track {
+  height: calc(var(--layout-unit) * 3);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.load-fill {
+  height: 100%;
+  border-radius: var(--radius-lg);
+  transition: width 0.35s ease;
+}
+
+.load-fill.load-green {
+  background: var(--green);
+}
+
+.load-fill.load-amber {
+  background: var(--amber);
+}
+
+.load-fill.load-red {
+  background: var(--red);
+}
+
+/* ----------------------------------------------------------
+   9. FAULTS VIEW
+   ---------------------------------------------------------- */
+
+#view-faults.view-panel.active {
+  gap: var(--space-xs);
+}
+
+.fault-grid-table {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  column-gap: var(--space-xs);
+  row-gap: var(--space-xs);
+  flex: 1;
+  min-height: 0;
+}
+
+.fault-grid-header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  padding: 0 var(--space-sm) var(--space-xs);
+  font-size: calc(var(--font-sm) * var(--faults-scale, 1));
+  font-weight: 700;
+  opacity: 0.6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fault-grid-header span:not(:first-child) {
+  text-align: center;
+}
+
+.fault-rows {
+  display: contents;
+}
+
+.fault-rows--flat .fault-grid-row {
+  background: none;
+  border-color: transparent;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.fault-grid-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--background-color) 88%, white 12%);
+}
+
+.fault-name {
+  font-size: calc(var(--font-sm) * var(--faults-scale, 1));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fault-badge {
+  font-size: calc(var(--font-sm) * var(--faults-scale, 1));
+  font-weight: 700;
+  text-align: center;
+  padding: calc(var(--space-xs) * 0.5) calc(var(--space-xs) * 0.9);
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+  min-width: 3.5em;
+  justify-self: center;
+  white-space: nowrap;
+}
+
+.fault-badge.fault-ok {
+  color: var(--green);
+  background: rgba(58, 219, 157, 0.12);
+  border: 1px solid rgba(58, 219, 157, 0.3);
+}
+
+.fault-badge.fault-on {
+  color: var(--red);
+  background: rgba(255, 94, 94, 0.12);
+  border: 1px solid rgba(255, 94, 94, 0.35);
+}
+
+button.fault-badge {
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: filter 0.1s ease, transform 0.1s ease;
+}
+
+button.fault-badge:active {
+  filter: brightness(1.4);
+  transform: scale(0.93);
+}
+
+.fault-warning {
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 94, 94, 0.45);
+  background: rgba(255, 94, 94, 0.1);
+  color: #ffd9d9;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: calc(var(--font-xs) * var(--faults-scale, 1));
+  line-height: 1.4;
+}
+
+.fault-summary {
+  font-size: var(--font-sm);
+  opacity: 0.9;
+  padding: var(--space-xs);
+}
+
+.muted {
+  opacity: 0.65;
+}
+
+.empty-message {
+  opacity: 0.7;
+  font-size: var(--font-sm);
+}
+
+/* ----------------------------------------------------------
+   10. OVERVIEW VIEW
+   ---------------------------------------------------------- */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--layout-unit) * 32), 1fr));
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.overview-cell {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-xs) * 0.5);
+  padding: var(--space-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--background-color) 88%, white 12%);
+}
+
+.overview-cell-label {
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.55;
+}
+
+.overview-cell-value {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-fault-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  padding: calc(var(--space-xs) * 0.4) calc(var(--space-xs) * 0.8);
+  border-radius: var(--radius-sm);
+  min-width: 2.2em;
+}
+
+/* ----------------------------------------------------------
+   11. CONFIG OVERLAY
+   ---------------------------------------------------------- */
+
+#config-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: color-mix(in srgb, var(--background-color) calc(var(--background-opacity) * 96%), transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+#config-overlay.config-overlay--open {
+  transform: translateY(0);
+}
+
+.cfg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cfg-title {
+  font-size: calc(var(--font-md) * var(--cfg-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.cfg-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.cfg-back-btn {
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--text-color);
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  padding: calc(var(--space-xs) * 0.8) var(--space-sm);
+  transition: filter 0.1s ease;
+}
+
+.cfg-back-btn:active {
+  filter: brightness(1.3);
+}
+
+.cfg-refresh-btn {
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--text-color);
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  padding: calc(var(--space-xs) * 0.8) var(--space-sm);
+  transition: filter 0.1s ease;
+}
+
+.cfg-refresh-btn:active,
+.cfg-refresh-btn:disabled {
+  filter: brightness(0.65);
+}
+
+.cfg-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cfg-section {
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--background-color) 88%, white 12%);
+  border-radius: var(--radius-sm);
+  padding: calc(var(--space-xs) * 0.5) var(--space-sm);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.cfg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(var(--space-xs) * 0.75) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cfg-section .cfg-row:last-child {
+  border-bottom: none;
+}
+
+.cfg-row-label {
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.cfg-row-value {
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-color);
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: var(--space-sm);
+}
+
+/* Config fault table */
+.cfg-fault-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: color-mix(in srgb, var(--background-color) 88%, white 12%);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.cfg-fault-table th {
+  font-size: calc(var(--font-xs) * var(--cfg-font-scale, 1));
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  padding: var(--space-xs) calc(var(--space-xs) * 0.8);
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cfg-fault-table th:first-child {
+  text-align: left;
+}
+
+.cfg-fault-table td {
+  font-size: calc(var(--font-xs) * var(--cfg-font-scale, 1));
+  padding: calc(var(--space-xs) * 0.85) calc(var(--space-xs) * 0.8);
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+}
+
+.cfg-fault-table td:first-child {
+  text-align: left;
+}
+
+.cfg-fault-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cfg-flag-on {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.cfg-flag-off {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.cfg-restart-sep {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: var(--space-xs) 0 var(--space-xs);
+}
+
+#restart-service-btn {
+  width: 100%;
+  background: var(--red);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.15s ease;
+}
+
+#restart-service-btn:active {
+  filter: brightness(1.2);
+}
+
+#restart-service-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.cfg-loading {
+  font-size: calc(var(--font-sm) * var(--cfg-font-scale, 1));
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+/* ----------------------------------------------------------
+   12. FAULT DETAILS OVERLAY
+   ---------------------------------------------------------- */
+
+#fault-details-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 50%;
+  max-height: 74vh;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateY(150vh);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+#fault-details-overlay.fault-details-overlay--open {
+  transform: translateY(-50%);
+}
+
+#fault-details-overlay .cfg-header {
+  justify-content: flex-end;
+  padding-bottom: var(--space-xs);
+}
+
+#fault-details-overlay .cfg-back-btn {
+  font-size: var(--font-sm);
+  padding: 1px 6px;
+}
+
+#fault-details-overlay .cfg-fault-table {
+  margin-bottom: var(--space-xs);
+}
+
+#fault-details-overlay .cfg-fault-table td {
+  vertical-align: middle;
+}
+
+#fault-details-overlay .fault-icon-btn,
+#fault-details-overlay .fd-icon-ok {
+  font-size: var(--font-lg);
+}
+
+.fault-icon-btn {
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  padding: 1px 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-weight: 700;
+  line-height: 1;
+  transition: filter 0.1s ease, transform 0.1s ease;
+}
+
+.fault-icon-btn:active {
+  filter: brightness(1.4);
+  transform: scale(0.9);
+}
+
+.fd-icon-fault {
+  color: var(--red);
+}
+
+.fd-icon-ok {
+  color: var(--green);
+}
+
+/* ----------------------------------------------------------
+   13. WARNING BANNER
+   ---------------------------------------------------------- */
+
+#warn-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 90;
+  transform: translateY(-110%) translateX(-50%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  pointer-events: none;
+  width: 80vw;
+}
+
+[data-layout="lg"] #warn-banner {
+  width: 50vw;
+}
+
+[data-layout="xl"] #warn-banner {
+  width: 34vw;
+}
+
+#warn-banner.warn-banner--visible {
+  transform: translateY(0) translateX(-50%);
+  pointer-events: auto;
+}
+
+.warn-card {
+  background: var(--warn-color, #c46000);
+  color: var(--warn-text, #ffffff);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-xs) * 0.6);
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: brightness(0.85);
+}
+
+.warn-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+}
+
+.warn-icon {
+  font-size: 1.2em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.warn-title {
+  font-weight: 700;
+  flex: 1;
+}
+
+.warn-dismiss {
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font-size: 0.85em;
+  padding: 1px 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  transition: filter 0.1s ease;
+}
+
+.warn-dismiss:active {
+  filter: brightness(1.3);
+}
+
+/* ----------------------------------------------------------
+   14. HEALTH INDICATOR
+   ---------------------------------------------------------- */
+
+.health-dot {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.health-dot--healthy {
+  background: var(--green);
+  animation: dot-pulse 2.4s ease-in-out infinite;
+}
+
+.health-dot--degraded {
+  background: var(--amber);
+}
+
+.health-dot--disconnected {
+  background: var(--red);
+}
+
+.health-dot-label {
+  position: absolute;
+  top: var(--space-xs);
+  right: calc(var(--space-xs) + 14px);
+  font-size: max(9px, var(--font-xs));
+  opacity: 0.7;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+/* ----------------------------------------------------------
+   15. MULTI-PANEL LAYOUT (L/XL)
+   ---------------------------------------------------------- */
+
+[data-layout="lg"] .content-area,
+[data-layout="xl"] .content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 1600px) {
+  [data-layout="lg"] .content-area,
+  [data-layout="xl"] .content-area {
+    flex-direction: row;
+  }
+}
+
+[data-layout="lg"] .view-panel.active,
+[data-layout="xl"] .view-panel.active {
+  flex: 1;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+[data-layout="lg"] #config-overlay,
+[data-layout="xl"] #config-overlay {
+  left: 25%;
+  right: 25%;
+}
+
+[data-layout="lg"] #fault-details-overlay,
+[data-layout="xl"] #fault-details-overlay {
+  left: 25%;
+  right: 25%;
+}
+
+/* ----------------------------------------------------------
+   16. ANIMATIONS
+   ---------------------------------------------------------- */
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(255, 94, 94, 0.4);
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(255, 94, 94, 0.7);
+    opacity: 1;
+  }
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ----------------------------------------------------------
+   17. HUD EFFECTS (gated behind .hud-enabled on <html>)
+   ---------------------------------------------------------- */
+
+/* --- 17a. Scanline overlay --- */
+.hud-enabled .widget-root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(77, 208, 168, 0.025) 3px,
+    rgba(77, 208, 168, 0.025) 4px
+  );
+  opacity: 0.04;
+}
+
+/* --- 17b. HUD Panel styling (angular corners) --- */
+.hud-enabled .hud-panel {
+  border-radius: 0;
+  border: none;
+  border-left: 2px solid var(--accent-color);
+  background: color-mix(in srgb, var(--background-color) 90%, white 10%);
+  position: relative;
+  clip-path: polygon(
+    0% 0%,
+    calc(100% - 6px) 0%,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0% calc(100% - 6px)
+  );
+}
+
+/* Corner bracket decorations */
+.hud-enabled .hud-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--border-glow);
+  border-right: 1px solid var(--border-glow);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hud-enabled .hud-panel::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-bottom: 1px solid var(--border-glow);
+  border-left: 1px solid var(--border-glow);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- 17c. Value glow --- */
+.hud-enabled .value,
+.hud-enabled .pin-val,
+.hud-enabled .row-value {
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* --- 17d. Active fault badge pulse --- */
+.hud-enabled .fault-badge.fault-on {
+  animation: pulse-glow 2.8s ease-in-out infinite;
+}
+
+/* --- 17e. Border glow on panels --- */
+.hud-enabled .hud-panel {
+  box-shadow:
+    inset 0 0 8px rgba(77, 208, 168, 0.05),
+    0 0 4px rgba(77, 208, 168, 0.1);
+}
+
+/* --- 17f. HUD row-item styling --- */
+.hud-enabled .row-item {
+  border-radius: 0;
+  border: none;
+  border-left: 2px solid var(--border-glow);
+  background: linear-gradient(135deg, rgba(77, 208, 168, 0.02) 0%, transparent 60%);
+}
+
+/* --- 17g. HUD fault grid row styling --- */
+.hud-enabled .fault-grid-row {
+  border-radius: 0;
+  border: none;
+  border-left: 2px solid var(--border-glow);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* --- 17h. HUD fault badge angular clip --- */
+.hud-enabled .fault-badge {
+  border-radius: 0;
+  clip-path: polygon(
+    0% 0%,
+    calc(100% - 4px) 0%,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0% calc(100% - 4px)
+  );
+}
+
+/* --- 17i. HUD labels uppercase + letter-spacing --- */
+.hud-enabled .row-label,
+.hud-enabled .fault-label,
+.hud-enabled .overview-cell-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- 17j. HUD pin-track angular style --- */
+.hud-enabled .pin-track {
+  border-radius: 0;
+  background: linear-gradient(
+    to top,
+    rgba(77, 208, 168, 0.08),
+    var(--grid-color)
+  );
+}
+
+/* --- 17k. HUD overview cell --- */
+.hud-enabled .overview-cell {
+  border-radius: 0;
+  border: none;
+  border-left: 2px solid var(--border-glow);
+  background: linear-gradient(135deg, rgba(77, 208, 168, 0.02) 0%, transparent 60%);
+}
+
+.hud-enabled .overview-cell-value {
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* --- 17l. HUD config overlay buttons --- */
+.hud-enabled .cfg-back-btn,
+.hud-enabled .cfg-refresh-btn {
+  border-radius: 0;
+  clip-path: polygon(
+    0% 0%,
+    calc(100% - 3px) 0%,
+    100% 3px,
+    100% 100%,
+    3px 100%,
+    0% calc(100% - 3px)
+  );
+  border-color: var(--border-glow);
+}
+
+/* --- 17m. HUD grid background on pins chart --- */
+.hud-enabled .pins-chart {
+  background-image: linear-gradient(
+    to right,
+    var(--grid-color) 1px,
+    transparent 1px
+  );
+  background-size: calc(100% / 12) 100%;
+}
