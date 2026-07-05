@@ -1506,6 +1506,195 @@ button.fault-badge:active {
   color: var(--red);
 }
 
+/* Pins compact mode */
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  padding: 5px var(--space-xs);
+}
+
+.section-divider-label {
+  font-family: var(--font-label);
+  font-size: max(11px, var(--font-sm));
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent-color) 70%, var(--text-color));
+  white-space: nowrap;
+}
+
+.section-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-color) 55%, transparent) 0%,
+    transparent 100%);
+}
+
+.pin-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-xs);
+  flex: 0 0 auto;
+  padding: 0 var(--space-xs);
+}
+
+.pin-compact-col {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-xs) * 0.5);
+  min-width: 0;
+  min-height: 0;
+}
+
+.pin-compact-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--space-xs) * 0.5);
+  padding: calc(var(--space-xs) * 0.4) var(--space-xs);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+
+.pin-compact-head-icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+  background-color: var(--accent-color);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.pin-compact-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: calc(var(--space-xs) * 0.8) var(--space-xs);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
+  border-left: 3px solid var(--accent-color);
+  background: color-mix(in srgb, var(--background-color) 86%, var(--accent-color) 6%);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.pin-compact-cell.low,
+.pin-compact-cell.over {
+  border-color: rgba(255, 94, 94, 0.4);
+  border-left-color: var(--red);
+  background: rgba(120, 22, 30, 0.32);
+}
+
+.pin-compact-cell.over .pin-compact-value {
+  color: var(--red);
+}
+
+.pin-compact-label {
+  font-family: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+
+.pin-compact-value {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pin-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: var(--space-xs) var(--space-xs) 0;
+}
+
+.pin-status-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+  border-left: 3px solid var(--accent-color);
+  background: color-mix(in srgb, var(--background-color) 86%, var(--accent-color) 6%);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.pin-status-item.fault {
+  border-color: rgba(255, 94, 94, 0.5);
+  border-left-color: var(--red);
+  background: rgba(120, 22, 30, 0.28);
+}
+
+.pin-status-icon {
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
+  background-color: var(--accent-color);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.pin-status-item.fault .pin-status-icon {
+  background-color: var(--red);
+}
+
+.pin-status-label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pin-status-badge {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: calc(var(--space-xs) * 0.3) var(--space-sm);
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+
+.pin-status-badge.ok {
+  color: #00e3b6;
+  background: rgba(0, 227, 182, 0.14);
+  border: 1px solid rgba(0, 227, 182, 0.5);
+}
+
+.pin-status-badge.fault {
+  color: var(--red);
+  background: rgba(255, 94, 94, 0.16);
+  border: 1px solid rgba(255, 94, 94, 0.55);
+  box-shadow: 0 0 calc(var(--layout-unit) * 1.2) rgba(255, 94, 94, 0.35);
+}
+
 /* Apply HUD frame to active panels */
 
 .view-panel.active.hud-frame {

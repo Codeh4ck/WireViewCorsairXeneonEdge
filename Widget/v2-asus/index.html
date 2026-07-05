@@ -31,6 +31,8 @@
     <meta name="x-icue-property" content="pinMetric" data-label="tr('Pin Metric')" data-type="combobox"
         data-default="'current'"
         data-values="[{'key':'current','value':tr('Current')},{'key':'power','value':tr('Power Label')},{'key':'voltage','value':tr('Voltage')}]" />
+    <meta name="x-icue-property" content="pinDisplayMode" data-label="tr('Display Mode')" data-type="combobox"
+        data-default="'Bars'" data-values='["Bars","Compact"]' />
     <meta name="x-icue-property" content="pinBarColor" data-label="tr('Bar Color')" data-type="color"
         data-default="'#8500ff'" />
     <meta name="x-icue-property" content="pinShowPowerValues" data-label="tr('Show Power Values')" data-type="switch"
@@ -135,7 +137,7 @@
     <script id="x-icue-groups" type="application/json">
   [
     { "title": "tr('General')", "properties": ["viewMode", "layoutPanel2", "pollIntervalSec", "debugMode", "tempUnit", "configShortcut", "warnOnFault"] },
-    { "title": "tr('Pins View')", "properties": ["pinMetric", "pinShowYAxis", "pinShowBarBg", "pinShowImbalance", "pinShowYGrid", "pinShowUnit", "pinShowPowerValues", "pinShowPeakHold", "pinShowHeadroom", "pinHeadroomPosition"] },
+    { "title": "tr('Pins View')", "properties": ["pinMetric", "pinDisplayMode", "pinShowYAxis", "pinShowBarBg", "pinShowImbalance", "pinShowYGrid", "pinShowUnit", "pinShowPowerValues", "pinShowPeakHold", "pinShowHeadroom", "pinHeadroomPosition"] },
     { "title": "tr('Status View')", "properties": ["statusShowCoreClock", "statusShowMemClock", "statusShowCoreTemp", "statusShowVramTemp", "statusShowFan1", "statusShowFan2", "statusCoreTempThreshold", "statusVramTempThreshold"] },
     { "title": "tr('Widget Personalization')", "properties": ["fontData", "fontLabel", "hudScanlines", "textColor", "accentColor", "backgroundColor", "backgroundMedia", "bgBrightness", "glassBlur", "transparency", "configFontSize", "pinBarColor", "pinColorImbalance", "pinPowerValuesColor", "pinPowerFontSize", "pinFontPinNumbers", "pinFontYAxis", "pinFontValues", "pinFontImbalance", "pinPeakHoldColor", "pinHeadroomColor", "pinHeadroomFontSize", "statusValueColor", "statusLabelColor", "statusIconColor", "statusFontSize", "warnColor", "warnTextColor", "warnFontSize", "warnTransparency"] }
   ]
@@ -213,6 +215,7 @@
                 vramUsage: null, vramUsed: null, vramFree: null, vramTotal: null,
                 currentImbalance: payload.currentImbalance || null,
                 wireOvercurrent: payload.wireOvercurrent || null,
+                voltageWarning: typeof payload.voltageWarning === 'boolean' ? payload.voltageWarning : null,
                 timestamp: payload.timestamp || null
             };
 
@@ -231,6 +234,17 @@
                 }
                 const field = NAMED_SENSOR_FIELDS[name];
                 if (field) out[field] = Number(s.value);
+            }
+
+            // voltageWarning is a temporary client-side calculation. The backend is expected to
+            // provide this field on the payload in the future, at which point this fallback is skipped.
+            if (out.voltageWarning === null) {
+                let vWarn = false;
+                for (let i = 0; i < pins.length; i++) {
+                    const v = pins[i].voltage;
+                    if (v > 0 && (v <= PIN_VOLTAGE_MIN_OK || v >= PIN_VOLTAGE_MAX_OK)) { vWarn = true; break; }
+                }
+                out.voltageWarning = vWarn;
             }
 
             return out;
@@ -278,6 +292,8 @@
         let ws = null;
         let wsReconnectTimer = null;
         let wsBackoffMs = 1000;
+        let wsGraceTimer = null;
+        const WS_GRACE_MS = 3000;
         let state = 'loading';
         let stateMessage = 'Loading';
         let latestData = null;
@@ -499,6 +515,8 @@
         }
 
         const PIN_CURRENT_LIMIT_A = 9.2;
+        const PIN_VOLTAGE_MIN_OK = 11.5;
+        const PIN_VOLTAGE_MAX_OK = 12.5;
 
         function getPinHeadroomLimit(metric) {
             if (metric === 'current') return PIN_CURRENT_LIMIT_A;
@@ -525,6 +543,40 @@
 
         const pinValuesBuf = [0, 0, 0, 0, 0, 0];
 
+        function makeSectionDivider(label) {
+            const d = document.createElement('div');
+            d.className = 'section-divider';
+            const l = document.createElement('span');
+            l.className = 'section-divider-label';
+            l.textContent = label;
+            const line = document.createElement('span');
+            line.className = 'section-divider-line';
+            d.appendChild(l);
+            d.appendChild(line);
+            return d;
+        }
+
+        function pinsOcFault() {
+            const oc = latestData && latestData.wireOvercurrent;
+            return !!(oc && oc.pinValues && Object.keys(oc.pinValues).length > 0);
+        }
+
+        function pinsImbFault() {
+            return !!(latestData && latestData.currentImbalance);
+        }
+
+        function pinsVoltageFault() {
+            if (!latestData) return false;
+            if (typeof latestData.voltageWarning === 'boolean') return latestData.voltageWarning;
+            const pins = latestData.pins;
+            if (!Array.isArray(pins)) return false;
+            for (let i = 0; i < pins.length; i++) {
+                const v = Number(pins[i] && pins[i].voltage);
+                if (v > 0 && (v <= PIN_VOLTAGE_MIN_OK || v >= PIN_VOLTAGE_MAX_OK)) return true;
+            }
+            return false;
+        }
+
         function renderPinsView() {
             const container = document.getElementById('view-pins');
             if (!container) return;
@@ -540,10 +592,12 @@
             const selectedMetric = getIcueProperty('pinMetric');
             const metric = selectedMetric === 'voltage' || selectedMetric === 'power' ? selectedMetric : 'current';
             const metricCfg = PIN_METRICS[metric];
+            const compact = String(getIcueProperty('pinDisplayMode') || 'Bars').toLowerCase() === 'compact';
+            const ocLimitA = Number((serviceConfig || SERVICE_CONFIG_DEFAULTS).wireOvercurrentAmperageThreshold) || PIN_CURRENT_LIMIT_A;
             const showUnit = getBoolProperty('pinShowUnit', false);
             const showPowerValues = getBoolProperty('pinShowPowerValues', true);
             const showPeakHold = getBoolProperty('pinShowPeakHold', true) && metric !== 'voltage';
-            const showHeadroom = getBoolProperty('pinShowHeadroom', false) && metric !== 'voltage';
+            const showHeadroom = getBoolProperty('pinShowHeadroom', false);
             const showImbalance = getBoolProperty('pinShowImbalance', false);
             const showBarBg = getBoolProperty('pinShowBarBg', false);
             const showYAxis = getBoolProperty('pinShowYAxis', true);
@@ -595,7 +649,7 @@
                 pinTopSpacePx = layoutUnit * 3.6 * scalePinValues;
 
                 structKey = [
-                    metric, n,
+                    compact ? 'c' : 'b', metric, n,
                     showYAxis ? 1 : 0, showBarBg ? 1 : 0, showYGrid ? 1 : 0,
                     showUnit ? 1 : 0, showImbalance ? 1 : 0,
                     showPowerValues ? 1 : 0, showPeakHold ? 1 : 0,
@@ -613,6 +667,80 @@
 
             if (!needRebuild) {
                 const nodes = container._pinNodes;
+
+                if (showPowerValues && nodes.pwrVal) {
+                    const pw = Number(latestData.totalPowerW || 0);
+                    const am = Number(latestData.totalCurrentA || 0);
+                    const vl = am > 0 ? pw / am : 0;
+                    nodes.pwrChip.style.color = pvColor;
+                    nodes.ampChip.style.color = pvColor;
+                    nodes.vltChip.style.color = pvColor;
+                    setTextIf(nodes.pwrVal, Math.round(pw) + ' W');
+                    setTextIf(nodes.ampVal, Math.round(am) + ' A');
+                    setTextIf(nodes.vltVal, vl.toFixed(2) + ' V');
+                }
+
+                if (showImbalance && n > 0 && nodes.miVal) {
+                    let minVal = Infinity, maxVal = -Infinity, minIdx = 0, maxIdx = 0;
+                    for (let i = 0; i < n; i++) {
+                        const v = pinValues[i];
+                        if (v < minVal) { minVal = v; minIdx = i; }
+                        if (v > maxVal) { maxVal = v; maxIdx = i; }
+                    }
+                    nodes.miChip.style.color = imbalColor;
+                    setTextIf(nodes.miVal, 'P' + (minIdx + 1) + ' → P' + (maxIdx + 1) + ' ' + metricCfg.format(maxVal - minVal, showUnit));
+                }
+
+                if (nodes.mode === 'compact') {
+                    const mc = nodes.metricCells;
+                    for (let i = 0; i < n; i++) {
+                        const v = pinValues[i];
+                        const rec = mc[i];
+                        if (!rec) continue;
+                        if (rec._v !== v) { rec._v = v; setTextIf(rec.val, metricCfg.format(v, showUnit)); }
+                        const over = Number((pins[i] && pins[i].current) || 0) >= ocLimitA;
+                        if (rec.over !== over) { rec.over = over; rec.cell.classList.toggle('over', over); }
+                    }
+                    if (nodes.headroomCells) {
+                        const hc = nodes.headroomCells;
+                        for (let i = 0; i < n; i++) {
+                            const rec = hc[i];
+                            if (!rec) continue;
+                            const cur = Number((pins[i] && pins[i].current) || 0);
+                            const headroom = PIN_CURRENT_LIMIT_A - cur;
+                            if (rec.hr !== headroom) {
+                                rec.hr = headroom;
+                                const low = headroom <= 0;
+                                setTextIf(rec.val, (headroom >= 0 ? '+' : '') + headroom.toFixed(2) + 'A');
+                                rec.cell.classList.toggle('low', low);
+                                rec.val.style.color = low ? '' : headroomColor;
+                            }
+                        }
+                    }
+                    const ocFault = pinsOcFault();
+                    const imbFault = pinsImbFault();
+                    if (nodes.ocFault !== ocFault) {
+                        nodes.ocFault = ocFault;
+                        nodes.ocBadge.textContent = ocFault ? 'FAULT' : 'OK';
+                        nodes.ocBadge.className = 'pin-status-badge ' + (ocFault ? 'fault' : 'ok');
+                        if (nodes.ocItem) nodes.ocItem.classList.toggle('fault', ocFault);
+                    }
+                    if (nodes.imbFault !== imbFault) {
+                        nodes.imbFault = imbFault;
+                        nodes.imbBadge.textContent = imbFault ? 'FAULT' : 'OK';
+                        nodes.imbBadge.className = 'pin-status-badge ' + (imbFault ? 'fault' : 'ok');
+                        if (nodes.imbItem) nodes.imbItem.classList.toggle('fault', imbFault);
+                    }
+                    const voltFault = pinsVoltageFault();
+                    if (nodes.voltFault !== voltFault) {
+                        nodes.voltFault = voltFault;
+                        nodes.voltBadge.textContent = voltFault ? 'FAULT' : 'OK';
+                        nodes.voltBadge.className = 'pin-status-badge ' + (voltFault ? 'fault' : 'ok');
+                        if (nodes.voltItem) nodes.voltItem.classList.toggle('fault', voltFault);
+                    }
+                    return;
+                }
+
                 const fills = nodes.fills, peaks = nodes.peaks, vals = nodes.vals;
                 for (let i = 0; i < n; i++) {
                     const v = pinValues[i];
@@ -648,36 +776,13 @@
                         cell.style.color = low ? '' : headroomColor;
                     }
                 }
-
-                if (showPowerValues && nodes.pwrVal) {
-                    const pw = Number(latestData.totalPowerW || 0);
-                    const am = Number(latestData.totalCurrentA || 0);
-                    const vl = am > 0 ? pw / am : 0;
-                    nodes.pwrChip.style.color = pvColor;
-                    nodes.ampChip.style.color = pvColor;
-                    nodes.vltChip.style.color = pvColor;
-                    setTextIf(nodes.pwrVal, Math.round(pw) + ' W');
-                    setTextIf(nodes.ampVal, Math.round(am) + ' A');
-                    setTextIf(nodes.vltVal, vl.toFixed(2) + ' V');
-                }
-
-                if (showImbalance && n > 0 && nodes.miVal) {
-                    let minVal = Infinity, maxVal = -Infinity, minIdx = 0, maxIdx = 0;
-                    for (let i = 0; i < n; i++) {
-                        const v = pinValues[i];
-                        if (v < minVal) { minVal = v; minIdx = i; }
-                        if (v > maxVal) { maxVal = v; maxIdx = i; }
-                    }
-                    nodes.miChip.style.color = imbalColor;
-                    setTextIf(nodes.miVal, 'P' + (minIdx + 1) + ' → P' + (maxIdx + 1) + ' ' + metricCfg.format(maxVal - minVal, showUnit));
-                }
                 return;
             }
 
             container.innerHTML = '';
             container.dataset.pinStructKey = structKey;
 
-            const nodes = { fills: [], peaks: [], vals: [], headroom: [], pwrChip: null, pwrVal: null, ampChip: null, ampVal: null, vltChip: null, vltVal: null, miChip: null, miVal: null };
+            const nodes = { mode: compact ? 'compact' : 'bars', fills: [], peaks: [], vals: [], headroom: [], pwrChip: null, pwrVal: null, ampChip: null, ampVal: null, vltChip: null, vltVal: null, miChip: null, miVal: null, metricCells: null, headroomCells: null, ocItem: null, ocBadge: null, imbItem: null, imbBadge: null, voltItem: null, voltBadge: null, ocFault: false, imbFault: false, voltFault: false };
 
             ensureHudTitle(container, 'PINS', metric.toUpperCase());
 
@@ -715,6 +820,100 @@
                 }
 
                 container.appendChild(strip);
+            }
+
+            if (compact) {
+                function makePinColumn(label, valueText, valueFontPx) {
+                    const col = document.createElement('div');
+                    col.className = 'pin-compact-col';
+                    const head = document.createElement('div');
+                    head.className = 'pin-compact-head';
+                    head.style.fontSize = fontPinLabel + 'px';
+                    head.appendChild(makeMaskIcon('pin.svg', 'pin-compact-head-icon'));
+                    const lbl = document.createElement('span');
+                    lbl.className = 'pin-compact-label';
+                    lbl.textContent = label;
+                    head.appendChild(lbl);
+                    const cell = document.createElement('div');
+                    cell.className = 'pin-compact-cell';
+                    cell.style.fontSize = valueFontPx + 'px';
+                    const val = document.createElement('span');
+                    val.className = 'pin-compact-value';
+                    val.textContent = valueText;
+                    cell.appendChild(val);
+                    col.appendChild(head);
+                    col.appendChild(cell);
+                    return { col: col, cell: cell, val: val };
+                }
+
+                container.appendChild(makeSectionDivider('METRICS'));
+                const grid = document.createElement('div');
+                grid.className = 'pin-compact-grid';
+                nodes.metricCells = [];
+                for (let i = 0; i < n; i++) {
+                    const c = makePinColumn('P' + (i + 1), metricCfg.format(pinValues[i], showUnit), fontPinVal);
+                    const over = Number((pins[i] && pins[i].current) || 0) >= ocLimitA;
+                    if (over) c.cell.classList.add('over');
+                    grid.appendChild(c.col);
+                    nodes.metricCells.push({ cell: c.cell, val: c.val, _v: pinValues[i], over: over });
+                }
+                container.appendChild(grid);
+
+                if (showHeadroom) {
+                    container.appendChild(makeSectionDivider('HEADROOM'));
+                    const hg = document.createElement('div');
+                    hg.className = 'pin-compact-grid pin-compact-headroom';
+                    nodes.headroomCells = [];
+                    for (let i = 0; i < n; i++) {
+                        const cur = Number((pins[i] && pins[i].current) || 0);
+                        const headroom = PIN_CURRENT_LIMIT_A - cur;
+                        const low = headroom <= 0;
+                        const c = makePinColumn('P' + (i + 1), (headroom >= 0 ? '+' : '') + headroom.toFixed(2) + 'A', fontHeadroom);
+                        if (low) c.cell.classList.add('low');
+                        else c.val.style.color = headroomColor;
+                        hg.appendChild(c.col);
+                        nodes.headroomCells.push({ cell: c.cell, val: c.val, hr: headroom });
+                    }
+                    container.appendChild(hg);
+                }
+
+                const ocFault = pinsOcFault();
+                const imbFault = pinsImbFault();
+                const voltFault = pinsVoltageFault();
+                const statusList = document.createElement('div');
+                statusList.className = 'pin-status-list';
+                statusList.style.fontSize = fontHeadroom + 'px';
+
+                function makeStatusIndicator(label, file, fault) {
+                    const item = document.createElement('div');
+                    item.className = 'pin-status-item' + (fault ? ' fault' : '');
+                    item.appendChild(makeMaskIcon(file, 'pin-status-icon'));
+                    const l = document.createElement('span');
+                    l.className = 'pin-status-label';
+                    l.textContent = label;
+                    const b = document.createElement('span');
+                    b.className = 'pin-status-badge ' + (fault ? 'fault' : 'ok');
+                    b.textContent = fault ? 'FAULT' : 'OK';
+                    item.appendChild(l);
+                    item.appendChild(b);
+                    statusList.appendChild(item);
+                    return { item: item, badge: b };
+                }
+
+                const ocInd = makeStatusIndicator('Overcurrent', 'overcurrent.svg', ocFault);
+                const imbInd = makeStatusIndicator('Imbalance', 'imbalance.svg', imbFault);
+                const voltInd = makeStatusIndicator('Voltage', 'voltage.svg', voltFault);
+                nodes.ocItem = ocInd.item; nodes.ocBadge = ocInd.badge;
+                nodes.imbItem = imbInd.item; nodes.imbBadge = imbInd.badge;
+                nodes.voltItem = voltInd.item; nodes.voltBadge = voltInd.badge;
+                nodes.ocFault = ocFault;
+                nodes.imbFault = imbFault;
+                nodes.voltFault = voltFault;
+                container.appendChild(statusList);
+
+                container._pinNodes = nodes;
+                container._pinLayoutUnit = layoutUnit;
+                return;
             }
 
             const chartWrap = document.createElement('div');
@@ -1001,14 +1200,18 @@
             fan: 'vfan.svg'
         };
 
-        function makeStatusIcon(name) {
-            const file = STATUS_ICON_FILES[name] || 'vcore.svg';
+        function makeMaskIcon(file, className) {
             const span = document.createElement('span');
-            span.className = 'status-metric-icon';
+            span.className = className;
             const url = "url('resources/" + file + "')";
             span.style.webkitMaskImage = url;
             span.style.maskImage = url;
             return span;
+        }
+
+        function makeStatusIcon(name) {
+            const file = STATUS_ICON_FILES[name] || 'vcore.svg';
+            return makeMaskIcon(file, 'status-metric-icon');
         }
 
         function formatStatusValue(metric, raw) {
@@ -1409,6 +1612,10 @@
             }
         }
 
+        function clearWsGrace() {
+            if (wsGraceTimer) { clearTimeout(wsGraceTimer); wsGraceTimer = null; }
+        }
+
         function closeWebSocket() {
             if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
             if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; ws.close(); ws = null; }
@@ -1429,7 +1636,8 @@
             ws = new WebSocket(wsUrl);
 
             ws.onopen = async function () {
-                wsBackoffMs = 1000;
+                clearWsGrace();
+                wsBackoffMs = 400;
                 await postPollConfigIfNeeded();
                 try {
                     const r = await fetch(BASE_URL + '/sensors', { cache: 'no-store', headers: { Accept: 'application/json' } });
@@ -1458,15 +1666,22 @@
                 }
             };
 
-            ws.onclose = async function () {
+            ws.onclose = function (event) {
                 ws = null;
-                latestData = null;
-                latestTimestamp = null;
-                const health = await fetchHealthStatus();
-                if (health === 'no_device' || health === 'ok') {
-                    setState('error', 'Background service is running, but no ASUS ROG Astral GPU was detected');
-                } else {
-                    setState('error', 'GPU sensors service is not running. Ensure the service is installed to proceed');
+                console.warn('[AstralMonitor] WS closed', { code: event && event.code, wasClean: event && event.wasClean });
+                if (!wsGraceTimer) {
+                    wsGraceTimer = setTimeout(async function () {
+                        wsGraceTimer = null;
+                        if (ws && ws.readyState === WebSocket.OPEN) return;
+                        latestData = null;
+                        latestTimestamp = null;
+                        const health = await fetchHealthStatus();
+                        if (health === 'no_device' || health === 'ok') {
+                            setState('error', 'Background service is running, but no ASUS ROG Astral GPU was detected');
+                        } else {
+                            setState('error', 'GPU sensors service is not running. Ensure the service is installed to proceed');
+                        }
+                    }, WS_GRACE_MS);
                 }
                 scheduleWsReconnect();
             };
@@ -1491,16 +1706,42 @@
             const debug = getIcueProperty('debugMode');
             if (debug === 'demo' || debug === 'overcurrent' || debug === 'imbalance' || debug === 'ocimb') {
                 closeWebSocket();
+                clearWsGrace();
                 var warnFields = {};
-                if (debug === 'overcurrent' || debug === 'ocimb') warnFields.wireOvercurrent = DEBUG_OVERCURRENT;
-                if (debug === 'imbalance' || debug === 'ocimb') warnFields.currentImbalance = DEBUG_IMBALANCE;
-                latestData = Object.assign({}, DEBUG_DATA, warnFields, { timestamp: new Date().toISOString() });
+                var debugPins = DEBUG_DATA.pins.map(function (p) { return { voltage: p.voltage, current: p.current, power: p.power }; });
+                function setDebugPinCurrent(name, amps) {
+                    var idx = parseInt(String(name).replace(/\D/g, ''), 10) - 1;
+                    if (idx >= 0 && idx < debugPins.length) {
+                        debugPins[idx].current = amps;
+                        debugPins[idx].power = Number((debugPins[idx].voltage * amps).toFixed(2));
+                    }
+                }
+                if (debug === 'imbalance' || debug === 'ocimb') {
+                    warnFields.currentImbalance = DEBUG_IMBALANCE;
+                    setDebugPinCurrent(DEBUG_IMBALANCE.maxPinName, DEBUG_IMBALANCE.maxPinAmperage);
+                    setDebugPinCurrent(DEBUG_IMBALANCE.minPinName, DEBUG_IMBALANCE.minPinAmperage);
+                }
+                if (debug === 'overcurrent' || debug === 'ocimb') {
+                    warnFields.wireOvercurrent = DEBUG_OVERCURRENT;
+                    Object.keys(DEBUG_OVERCURRENT.pinValues).forEach(function (name) {
+                        setDebugPinCurrent(name, DEBUG_OVERCURRENT.pinValues[name]);
+                    });
+                }
+                var debugTotalA = 0, debugTotalW = 0;
+                for (var di = 0; di < debugPins.length; di++) { debugTotalA += debugPins[di].current; debugTotalW += debugPins[di].power; }
+                latestData = Object.assign({}, DEBUG_DATA, warnFields, {
+                    pins: debugPins,
+                    totalCurrentA: Number(debugTotalA.toFixed(2)),
+                    totalPowerW: Number(debugTotalW.toFixed(2)),
+                    timestamp: new Date().toISOString()
+                });
                 latestTimestamp = latestData.timestamp;
                 setState('content', '');
                 return;
             }
             if (debug === 'error') {
                 closeWebSocket();
+                clearWsGrace();
                 latestData = null;
                 latestTimestamp = null;
                 setState('error', 'GPU sensors service is not running. Ensure the service is installed to proceed');

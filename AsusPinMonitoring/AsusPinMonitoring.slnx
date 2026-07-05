@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AsusPinMonitoring.Contracts/AsusPinMonitoring.Contracts.csproj" />
+  <Project Path="AsusPinMonitoring.Service/AsusPinMonitoring.Service.csproj" />
+  <Project Path="AsusPinMonitoring.TestConsole/AsusPinMonitoring.TestConsole.csproj" />
+</Solution>

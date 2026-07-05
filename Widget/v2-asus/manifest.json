@@ -3,7 +3,7 @@
   "id": "com.nikolasandreou.asusrogastralmonitor",
   "name": "ASUS ROG Astral Monitor",
   "description": "ASUS ROG Astral RTX 5090 live telemetry for Corsair Xeneon Edge.",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "preview_icon": "resources/asus.svg",
   "min_framework_version": "1.0.0",
   "os": [
