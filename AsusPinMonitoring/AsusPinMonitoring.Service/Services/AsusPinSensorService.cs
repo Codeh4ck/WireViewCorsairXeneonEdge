@@ -27,8 +27,8 @@ internal sealed class AsusPinSensorService(
 
             _trackedSensors = _computer.Hardware
                 .Where(x => x.HardwareType == HardwareType.GpuNvidia
-                            && x.Name.Contains("rtx", StringComparison.OrdinalIgnoreCase)
-                            && x.Name.Contains("5090", StringComparison.OrdinalIgnoreCase))
+                        && x.Name.Contains("rtx", StringComparison.OrdinalIgnoreCase) 
+                        && x.Name.Contains("5090", StringComparison.OrdinalIgnoreCase) || x.Name.Contains("5080"))
                 .SelectMany(h => h.Sensors
                     .Where(s => Maps.FriendlyNames.ContainsKey((s.Name, s.SensorType)))
                     .Select(s => (Sensor: s, FriendlyName: Maps.FriendlyNames[(s.Name, s.SensorType)], HardwareName: h.Name)))

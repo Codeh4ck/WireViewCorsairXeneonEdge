@@ -34,7 +34,7 @@ builder.Services
     .AddCors(o => o.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 builder.WebHost.ConfigureKestrel(k =>
-    k.ListenLocalhost(59274));
+    k.ListenLocalhost(59275));
 
 await using var app = builder.Build();
 app.UseWebSockets().UseCors();

@@ -4,7 +4,6 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
-var jsonSerializerOptions = new JsonSerializerOptions { WriteIndented = false };
 using var webSocket = new ClientWebSocket();
 
 Console.WriteLine("Connecting to ws://localhost:59274/ws ...");

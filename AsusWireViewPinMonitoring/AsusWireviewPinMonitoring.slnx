@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AsusWireviewPinMonitoring.Service/AsusWireviewPinMonitoring.Service.csproj" />
+  <Project Path="AsusWireviewPinMonitoring.Contracts/AsusWireviewPinMonitoring.Contracts.csproj" />
+  <Project Path="AsusWireviewPinMonitoring.TestConsole/AsusWireviewPinMonitoring.TestConsole.csproj" />
+</Solution>

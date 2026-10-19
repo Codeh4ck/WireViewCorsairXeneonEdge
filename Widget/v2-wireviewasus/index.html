@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
+    <title>tr('WireView Astral Monitor')</title>
+    <link rel="icon" type="image/svg+xml" href="resources/asus.svg" />
+    <meta name="x-icue-widget-group" content="tr('WireView Astral Monitor')" />
+    <meta name="x-icue-widget-preview" content="resources/preview.png" />
+    <meta name="x-icue-restrictions" data-restrictions='[{ "device": "dashboard_lcd" }]' />
+
+    <meta name="x-icue-property" content="viewMode" data-label="tr('View')" data-type="combobox" data-default="'pins'"
+        data-values="[{'key':'pins','value':tr('Pins')},{'key':'status','value':tr('Status')}]" />
+    <meta name="x-icue-property" content="layoutPanel2" data-label="tr('Panel 2 View')" data-type="combobox"
+        data-default="'off'"
+        data-values="[{'key':'off','value':tr('Off')},{'key':'pins','value':tr('Pins')},{'key':'status','value':tr('Status')}]" />
+    <meta name="x-icue-property" content="pinSource" data-label="tr('Pin Source')" data-type="combobox"
+        data-default="'gpu'"
+        data-values="[{'key':'gpu','value':tr('Graphics Card')},{'key':'wireview','value':tr('WireView Pro 2')}]" />
+    <meta name="x-icue-property" content="showCableRating" data-label="tr('Show Cable Rating')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pollIntervalSec" data-label="tr('Poll Interval')" data-type="slider"
+        data-default="1000" data-min="100" data-max="30000" data-step="100" data-unit-label="'ms'" />
+    <meta name="x-icue-property" content="debugMode" data-label="tr('Debug Mode')" data-type="combobox"
+        data-default="'off'"
+        data-values="[{'key':'off','value':tr('Off')},{'key':'demo','value':tr('Demo Data')},{'key':'fault','value':tr('Fault')},{'key':'overtemp','value':tr('Overtemperature')},{'key':'multifault','value':tr('Multi-fault')},{'key':'error','value':tr('Error Simulation')}]" />
+    <meta name="x-icue-property" content="tempUnit" data-label="tr('Temperature Unit')" data-type="tab-buttons"
+        data-default="'c'" data-values="[{'key':'c','value':tr('Celsius')},{'key':'f','value':tr('Fahrenheit')}]" />
+    <meta name="x-icue-property" content="configShortcut" data-label="tr('Config View Shortcut')" data-type="combobox"
+        data-default="'double-tap'"
+        data-values="[{'key':'double-tap','value':tr('Double Tap')},{'key':'long-press','value':tr('Long Press')}]" />
+    <meta name="x-icue-property" content="warnOnFault" data-label="tr('Warn on GPU fault')" data-type="switch"
+        data-default="true" />
+
+    <meta name="x-icue-property" content="pinMetric" data-label="tr('Pin Metric')" data-type="combobox"
+        data-default="'current'"
+        data-values="[{'key':'current','value':tr('Current')},{'key':'power','value':tr('Power Label')},{'key':'voltage','value':tr('Voltage')}]" />
+    <meta name="x-icue-property" content="pinDisplayMode" data-label="tr('Display Mode')" data-type="combobox"
+        data-default="'Bars'" data-values='["Bars","Compact"]' />
+    <meta name="x-icue-property" content="pinBarColor" data-label="tr('Bar Color')" data-type="color"
+        data-default="'#8500ff'" />
+    <meta name="x-icue-property" content="pinShowPowerValues" data-label="tr('Show Power Values')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pinPowerValuesColor" data-label="tr('Power Values Color')" data-type="color"
+        data-default="'#ffffff'" />
+    <meta name="x-icue-property" content="pinPowerFontSize" data-label="tr('Power Values Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="115" />
+    <meta name="x-icue-property" content="pinShowPeakHold" data-label="tr('Show Peak Hold')" data-type="switch"
+        data-default="false" />
+    <meta name="x-icue-property" content="pinPeakHoldColor" data-label="tr('Peak Hold Color')" data-type="color"
+        data-default="'#f5d033'" />
+    <meta name="x-icue-property" content="pinShowHeadroom" data-label="tr('Show Headroom')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pinHeadroomColor" data-label="tr('Headroom Color')" data-type="color"
+        data-default="'#00ff47'" />
+    <meta name="x-icue-property" content="pinHeadroomFontSize" data-label="tr('Headroom Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="130" />
+    <meta name="x-icue-property" content="pinHeadroomPosition" data-label="tr('Headroom Position')" data-type="combobox"
+        data-default="'Top'" data-values='["Bottom","Top"]' />
+    <meta name="x-icue-property" content="pinShowYAxis" data-label="tr('Show Y Axis')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pinShowBarBg" data-label="tr('Show Bar Background')" data-type="switch"
+        data-default="false" />
+    <meta name="x-icue-property" content="pinShowImbalance" data-label="tr('Show Max Imbalance')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pinColorImbalance" data-label="tr('Imbalance Value Color')" data-type="color"
+        data-default="'#ffffff'" />
+    <meta name="x-icue-property" content="pinShowYGrid" data-label="tr('Show Y Grid Lines')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="pinShowUnit" data-label="tr('Show Metric Unit')" data-type="switch"
+        data-default="false" />
+    <meta name="x-icue-property" content="pinFontPinNumbers" data-label="tr('Pin Numbers Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="120" />
+    <meta name="x-icue-property" content="pinFontYAxis" data-label="tr('Y Axis Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="120" />
+    <meta name="x-icue-property" content="pinFontValues" data-label="tr('Pin Values Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="120" />
+    <meta name="x-icue-property" content="pinFontImbalance" data-label="tr('Imbalance Font Size')" data-type="slider"
+        data-min="70" data-max="150" data-step="1" data-default="120" />
+
+    <meta name="x-icue-property" content="statusShowCoreClock" data-label="tr('Show Core Clock')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowMemClock" data-label="tr('Show Memory Clock')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowVramUsage" data-label="tr('Show VRAM Usage')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowTemps" data-label="tr('Show Core / VRAM Temp')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowFans" data-label="tr('Show Fans')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowBoardTemps" data-label="tr('Show Board Temps')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="statusShowExtTemps" data-label="tr('Show External Temps')" data-type="switch"
+        data-default="false" />
+    <meta name="x-icue-property" content="statusCoreTempThreshold" data-label="tr('Core Temp Threshold')"
+        data-type="slider" data-min="40" data-max="120" data-step="1" data-default="84" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="statusVramTempThreshold" data-label="tr('VRAM Temp Threshold')"
+        data-type="slider" data-min="40" data-max="120" data-step="1" data-default="95" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="statusValueColor" data-label="tr('Status Value Color')" data-type="color"
+        data-default="'#ffffff'" />
+    <meta name="x-icue-property" content="statusLabelColor" data-label="tr('Status Label Color')" data-type="color"
+        data-default="'#e7edf5'" />
+    <meta name="x-icue-property" content="statusIconColor" data-label="tr('Status Icon Color')" data-type="color"
+        data-default="'#00ff75'" />
+    <meta name="x-icue-property" content="statusFontSize" data-label="tr('Status Font Size')" data-type="slider"
+        data-min="50" data-max="400" data-step="1" data-default="120" />
+
+    <meta name="x-icue-property" content="warnColor" data-label="tr('Warning Color')" data-type="color"
+        data-default="'#8a0f1f'" />
+    <meta name="x-icue-property" content="warnTextColor" data-label="tr('Warning Text Color')" data-type="color"
+        data-default="'#ffffff'" />
+    <meta name="x-icue-property" content="warnFontSize" data-label="tr('Warning Font Size')" data-type="slider"
+        data-default="130" data-min="50" data-max="200" data-step="1" />
+    <meta name="x-icue-property" content="warnTransparency" data-label="tr('Warning Transparency')" data-type="slider"
+        data-default="90" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+
+    <meta name="x-icue-property" content="configFontSize" data-label="tr('Config Page Font Size')" data-type="slider"
+        data-default="130" data-min="50" data-max="200" data-step="1" />
+
+    <meta name="x-icue-property" content="fontData" data-label="tr('Data Font')" data-type="combobox"
+        data-default="'Cascadia Mono'"
+        data-values='["Consolas","Cascadia Mono","JetBrains Mono","Courier New","Segoe UI"]' />
+    <meta name="x-icue-property" content="fontLabel" data-label="tr('Label Font')" data-type="combobox"
+        data-default="'Cascadia Mono'"
+        data-values='["Consolas","Cascadia Mono","JetBrains Mono","Courier New","Segoe UI"]' />
+    <meta name="x-icue-property" content="hudScanlines" data-label="tr('HUD Scanlines')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#e7edf5'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#00e3b6'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#070b12'" />
+    <meta name="x-icue-property" content="backgroundMedia" data-label="tr('Background Image')"
+        data-type="media-selector" data-filters="['*.png','*.jpg','*.jpeg','*.webp']" />
+    <meta name="x-icue-property" content="bgBrightness" data-label="tr('Background Brightness')" data-type="slider"
+        data-default="100" data-min="20" data-max="150" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="glassBlur" data-label="tr('Glass Blur')" data-type="slider" data-default="0"
+        data-min="0" data-max="30" data-step="1" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+
+    <script id="x-icue-groups" type="application/json">
+  [
+    { "title": "tr('General')", "properties": ["viewMode", "layoutPanel2", "pinSource", "pollIntervalSec", "debugMode", "tempUnit", "configShortcut", "warnOnFault", "showCableRating"] },
+    { "title": "tr('Pins View')", "properties": ["pinMetric", "pinDisplayMode", "pinShowYAxis", "pinShowBarBg", "pinShowImbalance", "pinShowYGrid", "pinShowUnit", "pinShowPowerValues", "pinShowPeakHold", "pinShowHeadroom", "pinHeadroomPosition"] },
+    { "title": "tr('Status View')", "properties": ["statusShowCoreClock", "statusShowMemClock", "statusShowVramUsage", "statusShowTemps", "statusShowFans", "statusShowBoardTemps", "statusShowExtTemps", "statusCoreTempThreshold", "statusVramTempThreshold"] },
+    { "title": "tr('Widget Personalization')", "properties": ["fontData", "fontLabel", "hudScanlines", "textColor", "accentColor", "backgroundColor", "backgroundMedia", "bgBrightness", "glassBlur", "transparency", "configFontSize", "pinBarColor", "pinColorImbalance", "pinPowerValuesColor", "pinPowerFontSize", "pinFontPinNumbers", "pinFontYAxis", "pinFontValues", "pinFontImbalance", "pinPeakHoldColor", "pinHeadroomColor", "pinHeadroomFontSize", "statusValueColor", "statusLabelColor", "statusIconColor", "statusFontSize", "warnColor", "warnTextColor", "warnFontSize", "warnTransparency"] }
+  ]
+  </script>
+
+    <link rel="stylesheet" type="text/css" href="styles/widget.css" />
+</head>
+
+<body>
+    <div class="widget-root">
+        <div class="background-layer" id="background-layer" aria-hidden="true"></div>
+        <div class="glass-layer" aria-hidden="true"></div>
+
+        <div id="warn-banner" aria-live="polite"></div>
+
+        <div class="content-area">
+            <section class="view-panel" id="view-pins"></section>
+            <section class="view-panel" id="view-status"></section>
+            <section class="state-panel" id="state-panel"></section>
+        </div>
+
+        <div id="config-overlay" aria-hidden="true">
+            <div class="cfg-header">
+                <span class="cfg-title">Configuration</span>
+                <div class="cfg-header-actions">
+                    <button class="cfg-icon-btn cfg-refresh-btn" id="cfg-refresh-btn" aria-label="Refresh">↻</button>
+                    <button class="cfg-icon-btn cfg-cancel-btn" id="cfg-cancel-btn" aria-label="Close">✕</button>
+                </div>
+            </div>
+            <div class="cfg-content" id="cfg-content"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:59275';
+
+        const PIN_NAMES = ['Pin 1', 'Pin 2', 'Pin 3', 'Pin 4', 'Pin 5', 'Pin 6'];
+
+        const WIREVIEW_HARDWARE_NAME = 'WireView Pro 2';
+
+        const NAMED_SENSOR_FIELDS = {
+            'GPU Core Clock': 'gpuCoreClock',
+            'GPU Memory Clock': 'gpuMemClock',
+            'GPU Core Temp': 'gpuCoreTemp',
+            'VRAM Temp': 'vramTemp',
+            'Fan 1 Speed': 'fan1',
+            'Fan 2 Speed': 'fan2',
+            'GPU Usage': 'gpuUsage',
+            'GPU Power Draw': 'gpuPowerDraw',
+            'VRAM Usage': 'vramUsage',
+            'VRAM Used': 'vramUsed',
+            'VRAM Free': 'vramFree',
+            'VRAM Total': 'vramTotal'
+        };
+
+        // Accepts the combobox key ('wireview') or, defensively, the display label ('WireView Pro 2').
+        function getPinSource() {
+            const raw = String(getIcueProperty('pinSource') || '').toLowerCase();
+            return raw.indexOf('wire') !== -1 ? 'wireview' : 'gpu';
+        }
+
+        function normalizeSensors(payload) {
+            if (!payload || !Array.isArray(payload.sensors)) return null;
+
+            const pins = [
+                { voltage: 0, current: 0, power: 0 },
+                { voltage: 0, current: 0, power: 0 },
+                { voltage: 0, current: 0, power: 0 },
+                { voltage: 0, current: 0, power: 0 },
+                { voltage: 0, current: 0, power: 0 },
+                { voltage: 0, current: 0, power: 0 }
+            ];
+
+            const wvd = payload.wireViewData || {};
+
+            const out = {
+                pins: pins,
+                pinSource: getPinSource(),
+                totalPowerW: numberOrNull(wvd.totalPower),
+                totalCurrentA: numberOrNull(wvd.totalCurrent),
+                totalVoltageV: numberOrNull(wvd.totalVoltage),
+                boardTempIn: numberOrNull(wvd.onboardTempIn),
+                boardTempOut: numberOrNull(wvd.onboardTempOut),
+                extTemp1: numberOrNull(wvd.externalTemp1),
+                extTemp2: numberOrNull(wvd.externalTemp2),
+                psuCapabilityW: numberOrNull(wvd.psuCapabilityWatts),
+                faultStatus: Number(wvd.faultStatus) || 0,
+                faultLog: Number(wvd.faultLog) || 0,
+                gpuCoreClock: null, gpuMemClock: null, gpuCoreTemp: null, vramTemp: null,
+                fan1: null, fan2: null, gpuUsage: null, gpuPowerDraw: null,
+                vramUsage: null, vramUsed: null, vramFree: null, vramTotal: null,
+                voltageWarning: false,
+                timestamp: payload.timestamp || null
+            };
+
+            const wantWireView = out.pinSource === 'wireview';
+            const sensors = payload.sensors;
+            for (let i = 0; i < sensors.length; i++) {
+                const s = sensors[i];
+                if (!s || typeof s.sensorName !== 'string') continue;
+                const name = s.sensorName;
+                const idx = PIN_NAMES.indexOf(name);
+                if (idx !== -1) {
+                    const isWireView = s.hardwareName === WIREVIEW_HARDWARE_NAME;
+                    if (isWireView !== wantWireView) continue;
+                    const type = s.sensorType;
+                    if (type === 'Voltage') pins[idx].voltage = Number(s.value);
+                    else if (type === 'Current') pins[idx].current = Number(s.value);
+                    else if (type === 'Power') pins[idx].power = Number(s.value);
+                    continue;
+                }
+                if (s.hardwareName === WIREVIEW_HARDWARE_NAME) continue;
+                const field = NAMED_SENSOR_FIELDS[name];
+                if (field) out[field] = Number(s.value);
+            }
+
+            out.voltageWarning = pinsHaveVoltageFault(pins);
+
+            return out;
+        }
+
+        function numberOrNull(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        const DEBUG_DATA = {
+            pins: [
+                { voltage: 11.98, current: 3.42, power: 40.97 },
+                { voltage: 12.01, current: 7.85, power: 94.19 },
+                { voltage: 11.95, current: 1.23, power: 14.70 },
+                { voltage: 12.03, current: 8.91, power: 107.10 },
+                { voltage: 11.99, current: 5.67, power: 67.98 },
+                { voltage: 12.00, current: 0.38, power: 4.56 }
+            ],
+            totalPowerW: 329.5,
+            totalCurrentA: 27.46,
+            totalVoltageV: 12.0,
+            boardTempIn: 52.4,
+            boardTempOut: 38.1,
+            extTemp1: null,
+            extTemp2: null,
+            psuCapabilityW: 600,
+            faultStatus: 0,
+            faultLog: 0,
+            gpuCoreClock: 2820,
+            gpuMemClock: 1750,
+            gpuCoreTemp: 64.5,
+            vramTemp: 72.0,
+            fan1: 1850,
+            fan2: 1875,
+            gpuUsage: 98,
+            gpuPowerDraw: 412.3,
+            vramUsage: 41.2,
+            vramUsed: 13400,
+            vramFree: 19207,
+            vramTotal: 32607,
+            voltageWarning: false,
+            timestamp: null
+        };
+
+        function isDebugDataMode(debug) {
+            return debug === 'demo' || debug === 'fault' || debug === 'overtemp' || debug === 'multifault';
+        }
+
+        // Builds a complete fixture for a debug mode. Clearing faults rebuilds with 'demo' so the
+        // doctored pins and the derived voltageWarning are reset too, not just the fault masks.
+        function makeDebugSnapshot(debug) {
+            const faultFields = { faultStatus: 0, faultLog: 0 };
+            const debugPins = DEBUG_DATA.pins.map(function (p) { return { voltage: p.voltage, current: p.current, power: p.power }; });
+            const debugTemps = {};
+
+            if (debug === 'fault') {
+                faultFields.faultStatus = FAULT_BIT_WIRE_OCP;
+                faultFields.faultLog = FAULT_BIT_WIRE_OCP;
+                debugPins[3].current = 9.8;
+                debugPins[3].power = Number((debugPins[3].voltage * 9.8).toFixed(2));
+            }
+            if (debug === 'overtemp') {
+                faultFields.faultStatus = FAULT_BIT_OVERTEMP;
+                faultFields.faultLog = FAULT_BIT_OVERTEMP;
+                debugTemps.boardTempIn = 84.2;
+                debugTemps.boardTempOut = 79.6;
+            }
+            if (debug === 'multifault') {
+                faultFields.faultStatus = FAULT_BIT_OCP | FAULT_BIT_WIRE_OCP | 0x20;
+                faultFields.faultLog = FAULT_MASK_ALL;
+                debugPins[3].current = 9.8;
+                debugPins[3].power = Number((debugPins[3].voltage * 9.8).toFixed(2));
+                debugPins[5].voltage = 11.2;
+                debugPins[5].power = Number((11.2 * debugPins[5].current).toFixed(2));
+            }
+
+            let totalA = 0, totalW = 0;
+            for (let i = 0; i < debugPins.length; i++) { totalA += debugPins[i].current; totalW += debugPins[i].power; }
+
+            return Object.assign({}, DEBUG_DATA, faultFields, debugTemps, {
+                pins: debugPins,
+                pinSource: getPinSource(),
+                totalCurrentA: Number(totalA.toFixed(2)),
+                totalPowerW: Number(totalW.toFixed(2)),
+                totalVoltageV: Number((totalW / totalA).toFixed(2)),
+                voltageWarning: pinsHaveVoltageFault(debugPins),
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        let currentView = 'pins';
+        let lastAppliedPollMs = -1;
+        let fallbackPollMs = 1000;
+        let ws = null;
+        let wsReconnectTimer = null;
+        let wsBackoffMs = 1000;
+        let wsGraceTimer = null;
+        const WS_GRACE_MS = 3000;
+        let state = 'loading';
+        let stateMessage = 'Loading';
+        let latestData = null;
+        let latestTimestamp = null;
+        let cachedViewPanels = null;
+        let cachedBgLayer = null;
+        let serviceRestarting = false;
+        let lastStyleKey = '';
+        let deviceConfig = null;
+        let deviceConfigError = false;
+        let rawDeviceConfig = null;
+        let configPageOpen = false;
+        let peakHoldPerPin = [0, 0, 0, 0, 0, 0];
+        let peakHoldMetric = '';
+        let peakHoldSource = '';
+        let lastForcedCompact = false;
+        let lastRenderedPinSource = '';
+        let pinsSettingsDirty = true;
+        let statusSettingsDirty = true;
+
+        function resetPeakHold() {
+            peakHoldPerPin = [0, 0, 0, 0, 0, 0];
+        }
+
+        function setTextIf(el, s) {
+            if (el && el.textContent !== s) el.textContent = s;
+        }
+
+        icueEvents = {
+            onDataUpdated: onIcueDataUpdated,
+            onICUEInitialized: onIcueInitialized
+        };
+
+        const icuePropCache = new Map();
+
+        function invalidatePropCache() {
+            icuePropCache.clear();
+        }
+
+        function resolveIcueProperty(name) {
+            if (typeof window !== 'undefined' && Object.prototype.hasOwnProperty.call(window, name)) {
+                const value = window[name];
+                if (value !== undefined && value !== null && value !== '') return value;
+            }
+            try {
+                const value = Function('return typeof ' + name + ' !== "undefined" ? ' + name + ' : undefined')();
+                if (value !== undefined && value !== null && value !== '') return value;
+            } catch (e) { }
+            return undefined;
+        }
+
+        function getIcueProperty(name) {
+            if (icuePropCache.has(name)) return icuePropCache.get(name);
+            const value = resolveIcueProperty(name);
+            icuePropCache.set(name, value);
+            return value;
+        }
+
+        function clampRange(v, min, max, d) {
+            const n = Number(v);
+            if (!Number.isFinite(n)) return d;
+            return Math.max(min, Math.min(max, n));
+        }
+
+        function getBoolProperty(name, fallback) {
+            const value = getIcueProperty(name);
+            if (typeof value === 'boolean') return value;
+            if (value === 'true') return true;
+            if (value === 'false') return false;
+            return fallback;
+        }
+
+        function getConfiguredPollMs() {
+            const fromSetting = clampRange(getIcueProperty('pollIntervalSec'), 100, 30000, NaN);
+            if (Number.isFinite(fromSetting)) return Math.round(fromSetting);
+            return fallbackPollMs;
+        }
+
+        function toFahrenheit(c) {
+            return c * 9 / 5 + 32;
+        }
+
+        function formatTemp(celsiusValue) {
+            const unit = getIcueProperty('tempUnit') === 'f' ? 'f' : 'c';
+            const raw = Number(celsiusValue);
+            const shown = unit === 'f' ? toFahrenheit(raw) : raw;
+            const label = unit === 'f' ? 'F' : 'C';
+            return {
+                unit: unit,
+                value: shown,
+                text: Number.isFinite(shown) ? shown.toFixed(1) + ' ' + label : '--'
+            };
+        }
+
+        function setState(nextState, message) {
+            state = nextState;
+            stateMessage = message || '';
+            renderAll();
+        }
+
+        const FONT_FAMILY_FALLBACKS = {
+            'Consolas': '"Consolas","Cascadia Mono","Courier New",monospace',
+            'Cascadia Mono': '"Cascadia Mono","Consolas","Courier New",monospace',
+            'JetBrains Mono': '"JetBrains Mono","Consolas","Courier New",monospace',
+            'Courier New': '"Courier New","Consolas",monospace',
+            'Segoe UI': '"Segoe UI","Tahoma",sans-serif'
+        };
+
+        const DEFAULT_FONT_KEY = 'Cascadia Mono';
+
+        function resolveFontStack(value, fallbackKey) {
+            var key = (typeof value === 'string' && FONT_FAMILY_FALLBACKS[value]) ? value : fallbackKey;
+            return FONT_FAMILY_FALLBACKS[key];
+        }
+
+        function applyStyles() {
+            const rawText = getIcueProperty('textColor');
+            const rawAccent = getIcueProperty('accentColor');
+            const rawBg = getIcueProperty('backgroundColor');
+            const textColor = typeof rawText === 'string' ? rawText : '#e7edf5';
+            const accentColor = typeof rawAccent === 'string' ? rawAccent : '#00e3b6';
+            const backgroundColor = typeof rawBg === 'string' ? rawBg : '#070b12';
+            const transparency = clampRange(getIcueProperty('transparency'), 0, 100, 100) / 100;
+            const brightness = clampRange(getIcueProperty('bgBrightness'), 20, 150, 100) / 100;
+            const blur = clampRange(getIcueProperty('glassBlur'), 0, 30, 0);
+            const cfgFontScale = clampRange(getIcueProperty('configFontSize'), 50, 200, 130) / 100;
+            const fontData = resolveFontStack(getIcueProperty('fontData'), DEFAULT_FONT_KEY);
+            const fontLabel = resolveFontStack(getIcueProperty('fontLabel'), DEFAULT_FONT_KEY);
+            const hudScanlines = getBoolProperty('hudScanlines', false);
+            const media = getIcueProperty('backgroundMedia');
+            const mediaPath = (media && typeof media === 'object' && media.pathToAsset)
+                ? String(media.pathToAsset) : '';
+
+            const styleKey = [textColor, accentColor, backgroundColor, transparency, brightness, blur, cfgFontScale, fontData, fontLabel, hudScanlines ? 1 : 0, mediaPath].join('\x00');
+            if (styleKey === lastStyleKey) return;
+            lastStyleKey = styleKey;
+
+            const root = document.documentElement;
+            root.style.setProperty('--text-color', textColor);
+            root.style.setProperty('--accent-color', accentColor);
+            root.style.setProperty('--background-color', backgroundColor);
+            root.style.setProperty('--background-opacity', String(transparency));
+            root.style.setProperty('--background-brightness', String(brightness));
+            root.style.setProperty('--cfg-font-scale', String(cfgFontScale));
+            root.style.setProperty('--glass-blur', blur + 'px');
+            root.style.setProperty('--font-data', fontData);
+            root.style.setProperty('--font-label', fontLabel);
+            document.documentElement.dataset.hudScanlines = hudScanlines ? '1' : '0';
+
+            if (!cachedBgLayer) cachedBgLayer = document.getElementById('background-layer');
+            if (!cachedBgLayer) return;
+
+            if (mediaPath) {
+                cachedBgLayer.style.backgroundImage = "url('" + mediaPath.replace(/'/g, "\\'") + "')";
+                cachedBgLayer.style.backgroundSize = 'cover';
+                cachedBgLayer.style.backgroundPosition = 'center center';
+            } else {
+                cachedBgLayer.style.backgroundImage = 'none';
+            }
+        }
+
+        function activateView(viewName) {
+            currentView = viewName;
+            if (!cachedViewPanels) {
+                cachedViewPanels = Array.from(document.querySelectorAll('.view-panel'));
+            }
+            cachedViewPanels.forEach(function (panel) {
+                panel.classList.remove('active');
+            });
+            const activePanel = document.getElementById('view-' + viewName);
+            if (activePanel) activePanel.classList.add('active');
+        }
+
+        let lastStateKey = '';
+
+        function renderStateOverlay() {
+            const panel = document.getElementById('state-panel');
+            if (!panel) return;
+
+            const key = state + '\x00' + stateMessage;
+            if (key === lastStateKey) return;
+            lastStateKey = key;
+
+            if (state === 'content') {
+                panel.classList.remove('active');
+                panel.textContent = '';
+                return;
+            }
+
+            panel.classList.add('active');
+            panel.textContent = stateMessage || (state === 'loading' ? 'Loading' : 'Device unavailable');
+        }
+
+        const PIN_CURRENT_LIMIT_A = 9.2;
+        const PIN_VOLTAGE_MIN_OK = 11.40;
+        const PIN_VOLTAGE_MAX_OK = 12.60;
+
+        // Bounds are inclusive: 11.40 and lower, or 12.60 and higher, is out of spec.
+        // A pin reading 0 is absent rather than faulted.
+        function isPinVoltageOutOfSpec(value) {
+            const v = Number(value);
+            if (!Number.isFinite(v) || v <= 0) return false;
+            return v <= PIN_VOLTAGE_MIN_OK || v >= PIN_VOLTAGE_MAX_OK;
+        }
+
+        function pinsHaveVoltageFault(pins) {
+            if (!Array.isArray(pins)) return false;
+            for (let i = 0; i < pins.length; i++) {
+                if (isPinVoltageOutOfSpec(pins[i] && pins[i].voltage)) return true;
+            }
+            return false;
+        }
+
+        const FAULTS = [
+            { bit: 0x02, label: 'Overtemperature', icon: 'vtemp.svg' },
+            { bit: 0x04, label: 'Overcurrent', icon: 'overcurrent.svg', badge: 'OCP' },
+            { bit: 0x08, label: 'Wire Overcurrent', icon: 'overcurrent.svg', badge: 'Wire OCP' },
+            { bit: 0x10, label: 'Overpower', icon: 'voltage.svg' },
+            { bit: 0x20, label: 'Current Imbalance', icon: 'imbalance.svg' }
+        ];
+
+        const FAULT_MASK_ALL = 0x3E;
+        const FAULT_MASK_OVERCURRENT = 0x0C;
+        const FAULT_BIT_OVERTEMP = 0x02;
+        const FAULT_BIT_OCP = 0x04;
+        const FAULT_BIT_WIRE_OCP = 0x08;
+
+        const BOARD_TEMP_THRESHOLD_FALLBACK_C = 80;
+
+        function getRawConfigNumber(key) {
+            const v = rawDeviceConfig ? Number(rawDeviceConfig[key]) : NaN;
+            return Number.isFinite(v) ? v : null;
+        }
+
+        function getPinCurrentLimitA(source) {
+            if (source === 'wireview') {
+                const v = getRawConfigNumber('wireOcpFaultThresholdA');
+                if (v !== null && v > 0) return v;
+            }
+            return PIN_CURRENT_LIMIT_A;
+        }
+
+        function getBoardTempThresholdC() {
+            const v = getRawConfigNumber('tsFaultThresholdC');
+            return v !== null && v > 0 ? v : BOARD_TEMP_THRESHOLD_FALLBACK_C;
+        }
+
+        function getPinHeadroomLimit(metric, source) {
+            if (metric === 'current') return getPinCurrentLimitA(source);
+            return null;
+        }
+
+        const PIN_METRICS = {
+            current: {
+                field: 'current', axis: [0, 2, 4, 6, 8, 10], min: 0, max: 10, unit: 'A',
+                format: function (v, showUnit) { return v.toFixed(2) + (showUnit ? ' A' : ''); },
+                axisFormat: function (v) { return v + 'A'; }
+            },
+            power: {
+                field: 'power', axis: [0, 150, 300, 450, 600], min: 0, max: 600, unit: 'W',
+                format: function (v, showUnit) { return v.toFixed(1) + (showUnit ? ' W' : ''); },
+                axisFormat: function (v) { return v + 'W'; }
+            },
+            voltage: {
+                field: 'voltage', axis: [11.4, 11.7, 12.0, 12.3, 12.6], min: 11.4, max: 12.6, unit: 'V',
+                format: function (v, showUnit) { return v.toFixed(2) + (showUnit ? ' V' : ''); },
+                axisFormat: function (v) { return v.toFixed(1) + 'V'; }
+            }
+        };
+
+        const pinValuesBuf = [0, 0, 0, 0, 0, 0];
+
+        function makeSectionDivider(label) {
+            const d = document.createElement('div');
+            d.className = 'section-divider';
+            const l = document.createElement('span');
+            l.className = 'section-divider-label';
+            l.textContent = label;
+            const line = document.createElement('span');
+            line.className = 'section-divider-line';
+            d.appendChild(l);
+            d.appendChild(line);
+            return d;
+        }
+
+        function getFaultStatus() {
+            return latestData ? (Number(latestData.faultStatus) || 0) : 0;
+        }
+
+        function getFaultLog() {
+            return latestData ? (Number(latestData.faultLog) || 0) : 0;
+        }
+
+        function pinsVoltageFault() {
+            if (!latestData) return false;
+            if (typeof latestData.voltageWarning === 'boolean') return latestData.voltageWarning;
+            return pinsHaveVoltageFault(latestData.pins);
+        }
+
+        function overcurrentBadgeText(mask) {
+            const ocp = (mask & 0x04) !== 0;
+            const wire = (mask & 0x08) !== 0;
+            if (ocp && wire) return 'OCP + Wire OCP';
+            if (wire) return 'Wire OCP';
+            if (ocp) return 'OCP';
+            return 'OK';
+        }
+
+        const PIN_STATUS_ROWS = [
+            { label: 'Overcurrent', icon: 'overcurrent.svg', mask: FAULT_MASK_OVERCURRENT, badgeText: overcurrentBadgeText },
+            { label: 'Overpower', icon: 'voltage.svg', mask: 0x10 },
+            { label: 'Imbalance', icon: 'imbalance.svg', mask: 0x20 },
+            { label: 'Voltage', icon: 'voltage.svg', derived: pinsVoltageFault, flashOnFault: true }
+        ];
+
+        function pinStatusBadgeClass(row, st) {
+            return 'pin-status-badge ' + (st.fault ? 'fault' : 'ok') +
+                (st.fault && row.flashOnFault ? ' fault-flash' : '');
+        }
+
+        function overtemperatureFault() {
+            return (getFaultStatus() & FAULT_BIT_OVERTEMP) !== 0;
+        }
+
+        function totalOvercurrentFault() {
+            return (getFaultStatus() & FAULT_BIT_OCP) !== 0;
+        }
+
+        function wireOvercurrentFault() {
+            return (getFaultStatus() & FAULT_BIT_WIRE_OCP) !== 0;
+        }
+
+        function anyPinStatusFault() {
+            for (let i = 0; i < PIN_STATUS_ROWS.length; i++) {
+                if (pinStatusRowState(PIN_STATUS_ROWS[i]).fault) return true;
+            }
+            return false;
+        }
+
+        function pinStatusRowState(row) {
+            if (row.derived) {
+                const on = !!row.derived();
+                return { fault: on, text: on ? 'FAULT' : 'OK', key: on ? 1 : 0 };
+            }
+            const active = getFaultStatus() & row.mask;
+            return {
+                fault: active !== 0,
+                text: active === 0 ? 'OK' : (row.badgeText ? row.badgeText(active) : 'FAULT'),
+                key: active
+            };
+        }
+
+        function updatePinStatusRows(rows) {
+            if (!rows) return;
+            for (let i = 0; i < rows.length; i++) {
+                const rec = rows[i];
+                const st = pinStatusRowState(rec.row);
+                if (rec.key === st.key) continue;
+                rec.key = st.key;
+                rec.badge.textContent = st.text;
+                rec.badge.className = pinStatusBadgeClass(rec.row, st);
+                rec.item.classList.toggle('fault', st.fault);
+            }
+        }
+
+        function cableRatingText() {
+            if (!getBoolProperty('showCableRating', true)) return '';
+            const w = latestData ? Number(latestData.psuCapabilityW) : NaN;
+            if (!Number.isFinite(w) || w <= 0) return '';
+            return 'CABLE ' + Math.round(w) + ' W';
+        }
+
+        function renderPinsView() {
+            const container = document.getElementById('view-pins');
+            if (!container) return;
+            if (!latestData || !Array.isArray(latestData.pins)) {
+                container.innerHTML = '';
+                container._pinNodes = null;
+                container.dataset.pinStructKey = '';
+                pinsSettingsDirty = true;
+                ensureHudTitle(container, 'PINS', '');
+                return;
+            }
+
+            refreshHudCable(container);
+
+            const selectedMetric = getIcueProperty('pinMetric');
+            const metric = selectedMetric === 'voltage' || selectedMetric === 'power' ? selectedMetric : 'current';
+            const metricCfg = PIN_METRICS[metric];
+            // A fault forces the compact layout: the bar chart has nowhere to surface the
+            // status rows, and those rows are how the user reaches the clear-faults page.
+            const forcedCompact = anyPinStatusFault();
+            if (forcedCompact !== lastForcedCompact) {
+                lastForcedCompact = forcedCompact;
+                pinsSettingsDirty = true;
+            }
+            const compact = forcedCompact || String(getIcueProperty('pinDisplayMode') || 'Bars').toLowerCase() === 'compact';
+            // latestData.pinSource is stamped by normalizeSensors, so it lags a settings change by
+            // one frame. Force a rebuild when it moves, otherwise the struct key is never
+            // recomputed and the title keeps showing the previous source forever.
+            const pinSource = latestData.pinSource === 'wireview' ? 'wireview' : 'gpu';
+            if (pinSource !== lastRenderedPinSource) {
+                lastRenderedPinSource = pinSource;
+                pinsSettingsDirty = true;
+            }
+            const ocLimitA = getPinCurrentLimitA(pinSource);
+            const showUnit = getBoolProperty('pinShowUnit', false);
+            const showPowerValues = getBoolProperty('pinShowPowerValues', true);
+            const showPeakHold = getBoolProperty('pinShowPeakHold', true) && metric !== 'voltage';
+            const showHeadroom = getBoolProperty('pinShowHeadroom', false);
+            const showImbalance = getBoolProperty('pinShowImbalance', false);
+            const showBarBg = getBoolProperty('pinShowBarBg', false);
+            const showYAxis = getBoolProperty('pinShowYAxis', true);
+            const showYGrid = getBoolProperty('pinShowYGrid', false);
+
+            if (peakHoldMetric !== metric || peakHoldSource !== pinSource) {
+                peakHoldMetric = metric;
+                peakHoldSource = pinSource;
+                peakHoldPerPin = [0, 0, 0, 0, 0, 0];
+            }
+
+            const barColor = getIcueProperty('pinBarColor') || '#8500ff';
+            const peakHoldColor = getIcueProperty('pinPeakHoldColor') || '#f5d033';
+            const headroomColor = getIcueProperty('pinHeadroomColor') || '#00ff47';
+            const pvColor = getIcueProperty('pinPowerValuesColor') || '#ffffff';
+            const imbalColor = getIcueProperty('pinColorImbalance') || '#ffffff';
+            const headroomLimit = getPinHeadroomLimit(metric, pinSource);
+            const headroomPosition = String(getIcueProperty('pinHeadroomPosition') || 'Top').toLowerCase() === 'bottom' ? 'bottom' : 'top';
+
+            const pins = latestData.pins;
+            const n = pins.length;
+            const mMin = metricCfg.min;
+            const mRange = metricCfg.max - metricCfg.min;
+            for (let i = 0; i < n; i++) {
+                const v = Number((pins[i] && pins[i][metricCfg.field]) || 0);
+                pinValuesBuf[i] = v;
+                if (Number.isFinite(v) && v > peakHoldPerPin[i]) peakHoldPerPin[i] = v;
+            }
+            const pinValues = pinValuesBuf;
+
+            const layoutUnit = Math.min(window.innerWidth, window.innerHeight) / 100;
+
+            let scalePinNumbers, scaleYAxis, scalePinValues, scaleImbalance, scalePowerValues, scaleHeadroom;
+            let fontPinLabel, fontYTick, fontPinVal, fontPowerValues, fontHeadroom, pinBottomSpacePx, pinTopSpacePx;
+            let structKey, needRebuild;
+
+            if (pinsSettingsDirty || !container._pinNodes || layoutUnit !== container._pinLayoutUnit) {
+                scalePinNumbers = clampRange(getIcueProperty('pinFontPinNumbers'), 70, 150, 115) / 100;
+                scaleYAxis = clampRange(getIcueProperty('pinFontYAxis'), 70, 150, 115) / 100;
+                scalePinValues = clampRange(getIcueProperty('pinFontValues'), 70, 150, 120) / 100;
+                scaleImbalance = clampRange(getIcueProperty('pinFontImbalance'), 70, 150, 115) / 100;
+                scalePowerValues = clampRange(getIcueProperty('pinPowerFontSize'), 70, 150, 115) / 100;
+                scaleHeadroom = clampRange(getIcueProperty('pinHeadroomFontSize'), 70, 150, 130) / 100;
+                fontPinLabel = Math.max(9, layoutUnit * 2.7) * scalePinNumbers;
+                fontYTick = Math.max(10, layoutUnit * 2.7) * scaleYAxis;
+                fontPinVal = Math.max(11, layoutUnit * 3.2) * scalePinValues;
+                fontPowerValues = Math.max(10, layoutUnit * 2.7) * scalePowerValues;
+                fontHeadroom = Math.max(9, layoutUnit * 2.5) * scaleHeadroom;
+                pinBottomSpacePx = layoutUnit * 2.6 * scalePinNumbers;
+                pinTopSpacePx = layoutUnit * 3.6 * scalePinValues;
+
+                structKey = [
+                    compact ? 'c' : 'b', metric, pinSource, n,
+                    showYAxis ? 1 : 0, showBarBg ? 1 : 0, showYGrid ? 1 : 0,
+                    showUnit ? 1 : 0, showImbalance ? 1 : 0,
+                    showPowerValues ? 1 : 0, showPeakHold ? 1 : 0,
+                    showHeadroom ? 1 : 0, headroomPosition,
+                    scalePinNumbers.toFixed(3), scaleYAxis.toFixed(3),
+                    scalePinValues.toFixed(3), scaleImbalance.toFixed(3),
+                    scalePowerValues.toFixed(3), scaleHeadroom.toFixed(3)
+                ].join(',');
+
+                needRebuild = !container._pinNodes || container.dataset.pinStructKey !== structKey || layoutUnit !== container._pinLayoutUnit;
+                pinsSettingsDirty = false;
+            } else {
+                needRebuild = false;
+            }
+
+            if (!needRebuild) {
+                const nodes = container._pinNodes;
+
+                if (showPowerValues && nodes.pwrVal) {
+                    nodes.pwrChip.style.color = pvColor;
+                    nodes.ampChip.style.color = pvColor;
+                    nodes.vltChip.style.color = pvColor;
+                    setTextIf(nodes.pwrVal, formatTotalPower());
+                    setTextIf(nodes.ampVal, formatTotalCurrent());
+                    setTextIf(nodes.vltVal, formatTotalVoltage());
+                    nodes.pwrChip.classList.toggle('fault-flash', totalOvercurrentFault());
+                }
+
+                if (showImbalance && n > 0 && nodes.miVal) {
+                    let minVal = Infinity, maxVal = -Infinity, minIdx = 0, maxIdx = 0;
+                    for (let i = 0; i < n; i++) {
+                        const v = pinValues[i];
+                        if (v < minVal) { minVal = v; minIdx = i; }
+                        if (v > maxVal) { maxVal = v; maxIdx = i; }
+                    }
+                    nodes.miChip.style.color = imbalColor;
+                    setTextIf(nodes.miVal, 'P' + (minIdx + 1) + ' → P' + (maxIdx + 1) + ' ' + metricCfg.format(maxVal - minVal, showUnit));
+                }
+
+                if (nodes.mode === 'compact') {
+                    const mc = nodes.metricCells;
+                    const wireFault = wireOvercurrentFault();
+                    for (let i = 0; i < n; i++) {
+                        const v = pinValues[i];
+                        const rec = mc[i];
+                        if (!rec) continue;
+                        if (rec._v !== v) { rec._v = v; setTextIf(rec.val, metricCfg.format(v, showUnit)); }
+                        const over = Number((pins[i] && pins[i].current) || 0) >= ocLimitA;
+                        if (rec.over !== over) { rec.over = over; rec.cell.classList.toggle('over', over); }
+                        const flash = over && wireFault;
+                        if (rec.flash !== flash) { rec.flash = flash; rec.cell.classList.toggle('fault-flash', flash); }
+                    }
+                    if (nodes.headroomCells) {
+                        const hc = nodes.headroomCells;
+                        for (let i = 0; i < n; i++) {
+                            const rec = hc[i];
+                            if (!rec) continue;
+                            const cur = Number((pins[i] && pins[i].current) || 0);
+                            const headroom = ocLimitA - cur;
+                            if (rec.hr !== headroom) {
+                                rec.hr = headroom;
+                                const low = headroom <= 0;
+                                setTextIf(rec.val, (headroom >= 0 ? '+' : '') + headroom.toFixed(2) + 'A');
+                                rec.cell.classList.toggle('low', low);
+                                rec.val.style.color = low ? '' : headroomColor;
+                            }
+                        }
+                    }
+                    updatePinStatusRows(nodes.statusRows);
+                    return;
+                }
+
+                const fills = nodes.fills, peaks = nodes.peaks, vals = nodes.vals, cols = nodes.cols;
+                const wireFaultBars = wireOvercurrentFault();
+                for (let i = 0; i < n; i++) {
+                    const v = pinValues[i];
+                    const fill = fills[i];
+                    if (fill) {
+                        const pct = Math.max(0, Math.min(100, ((v - mMin) / mRange) * 100));
+                        if (fill._pct !== pct) { fill._pct = pct; fill.style.height = pct.toFixed(1) + '%'; }
+                        fill.style.background = barColor;
+                    }
+                    const col = cols[i];
+                    if (col) {
+                        const flash = wireFaultBars && Number((pins[i] && pins[i].current) || 0) >= ocLimitA;
+                        if (col._flash !== flash) { col._flash = flash; col.classList.toggle('fault-flash', flash); }
+                    }
+                    const val = vals[i];
+                    if (val && val._v !== v) { val._v = v; setTextIf(val, metricCfg.format(v, showUnit)); }
+                    const peak = peaks[i];
+                    if (peak) {
+                        const pk = peakHoldPerPin[i];
+                        if (peak._pv !== pk) {
+                            peak._pv = pk;
+                            const peakPct = Math.max(0, Math.min(100, ((pk - mMin) / mRange) * 100));
+                            peak.style.bottom = peakPct.toFixed(1) + '%';
+                        }
+                        peak.style.color = peakHoldColor;
+                    }
+                }
+
+                if (showHeadroom && headroomLimit !== null) {
+                    const cells = nodes.headroom;
+                    for (let i = 0; i < n; i++) {
+                        const cell = cells[i];
+                        if (!cell) continue;
+                        const headroom = headroomLimit - pinValues[i];
+                        const low = headroom <= 0;
+                        setTextIf(cell, (headroom >= 0 ? '+' : '') + headroom.toFixed(metric === 'current' ? 2 : 1) + metricCfg.unit);
+                        cell.classList.toggle('low', low);
+                        cell.style.color = low ? '' : headroomColor;
+                    }
+                }
+                return;
+            }
+
+            container.innerHTML = '';
+            container.dataset.pinStructKey = structKey;
+
+            const nodes = { mode: compact ? 'compact' : 'bars', fills: [], peaks: [], vals: [], cols: [], headroom: [], pwrChip: null, pwrVal: null, ampChip: null, ampVal: null, vltChip: null, vltVal: null, miChip: null, miVal: null, metricCells: null, headroomCells: null, statusRows: null };
+
+            ensureHudTitle(container, 'PINS', metric.toUpperCase() + ' · ' + (pinSource === 'wireview' ? 'WIREVIEW' : 'ASUS'), null, cableRatingText());
+
+            if (showPowerValues || showImbalance) {
+                const strip = document.createElement('div');
+                strip.className = 'pin-board-temps';
+                strip.style.fontSize = fontPowerValues + 'px';
+
+                if (showPowerValues) {
+                    const pwrChip = makeBoardChip('pwr', 'PWR', formatTotalPower(), pvColor);
+                    const ampChip = makeBoardChip('amp', 'AMP', formatTotalCurrent(), pvColor);
+                    const vltChip = makeBoardChip('vlt', 'VLT', formatTotalVoltage(), pvColor);
+                    pwrChip.classList.toggle('fault-flash', totalOvercurrentFault());
+                    nodes.pwrChip = pwrChip; nodes.pwrVal = pwrChip.querySelector('.pbt-val');
+                    nodes.ampChip = ampChip; nodes.ampVal = ampChip.querySelector('.pbt-val');
+                    nodes.vltChip = vltChip; nodes.vltVal = vltChip.querySelector('.pbt-val');
+                    strip.appendChild(pwrChip);
+                    strip.appendChild(ampChip);
+                    strip.appendChild(vltChip);
+                }
+
+                if (showImbalance && n > 0) {
+                    let minVal = Infinity, maxVal = -Infinity, minIdx = 0, maxIdx = 0;
+                    for (let i = 0; i < n; i++) {
+                        const v = pinValues[i];
+                        if (v < minVal) { minVal = v; minIdx = i; }
+                        if (v > maxVal) { maxVal = v; maxIdx = i; }
+                    }
+                    const miText = 'P' + (minIdx + 1) + ' → P' + (maxIdx + 1) + ' ' + metricCfg.format(maxVal - minVal, showUnit);
+                    const miChip = makeBoardChip('mi', '', miText, imbalColor);
+                    nodes.miChip = miChip; nodes.miVal = miChip.querySelector('.pbt-val');
+                    strip.appendChild(miChip);
+                }
+
+                container.appendChild(strip);
+            }
+
+            if (compact) {
+                function makePinColumn(label, valueText, valueFontPx) {
+                    const col = document.createElement('div');
+                    col.className = 'pin-compact-col';
+                    const head = document.createElement('div');
+                    head.className = 'pin-compact-head';
+                    head.style.fontSize = fontPinLabel + 'px';
+                    head.appendChild(makeMaskIcon('pin.svg', 'pin-compact-head-icon'));
+                    const lbl = document.createElement('span');
+                    lbl.className = 'pin-compact-label';
+                    lbl.textContent = label;
+                    head.appendChild(lbl);
+                    const cell = document.createElement('div');
+                    cell.className = 'pin-compact-cell';
+                    cell.style.fontSize = valueFontPx + 'px';
+                    const val = document.createElement('span');
+                    val.className = 'pin-compact-value';
+                    val.textContent = valueText;
+                    cell.appendChild(val);
+                    col.appendChild(head);
+                    col.appendChild(cell);
+                    return { col: col, cell: cell, val: val };
+                }
+
+                container.appendChild(makeSectionDivider('METRICS'));
+                const grid = document.createElement('div');
+                grid.className = 'pin-compact-grid';
+                nodes.metricCells = [];
+                const wireFaultNow = wireOvercurrentFault();
+                for (let i = 0; i < n; i++) {
+                    const c = makePinColumn('P' + (i + 1), metricCfg.format(pinValues[i], showUnit), fontPinVal);
+                    const over = Number((pins[i] && pins[i].current) || 0) >= ocLimitA;
+                    const flash = over && wireFaultNow;
+                    if (over) c.cell.classList.add('over');
+                    if (flash) c.cell.classList.add('fault-flash');
+                    grid.appendChild(c.col);
+                    nodes.metricCells.push({ cell: c.cell, val: c.val, _v: pinValues[i], over: over, flash: flash });
+                }
+                container.appendChild(grid);
+
+                if (showHeadroom) {
+                    container.appendChild(makeSectionDivider('HEADROOM'));
+                    const hg = document.createElement('div');
+                    hg.className = 'pin-compact-grid pin-compact-headroom';
+                    nodes.headroomCells = [];
+                    for (let i = 0; i < n; i++) {
+                        const cur = Number((pins[i] && pins[i].current) || 0);
+                        const headroom = ocLimitA - cur;
+                        const low = headroom <= 0;
+                        const c = makePinColumn('P' + (i + 1), (headroom >= 0 ? '+' : '') + headroom.toFixed(2) + 'A', fontHeadroom);
+                        if (low) c.cell.classList.add('low');
+                        else c.val.style.color = headroomColor;
+                        hg.appendChild(c.col);
+                        nodes.headroomCells.push({ cell: c.cell, val: c.val, hr: headroom });
+                    }
+                    container.appendChild(hg);
+                }
+
+                const statusList = document.createElement('div');
+                statusList.className = 'pin-status-list';
+                statusList.style.fontSize = fontHeadroom + 'px';
+
+                nodes.statusRows = PIN_STATUS_ROWS.map(function (row) {
+                    const st = pinStatusRowState(row);
+                    const item = document.createElement('div');
+                    item.className = 'pin-status-item' + (st.fault ? ' fault' : '');
+                    item.addEventListener('click', function (e) {
+                        if (!pinStatusRowState(row).fault) return;
+                        e.stopPropagation();
+                        if (!configPageOpen) openConfigPage();
+                    });
+                    item.appendChild(makeMaskIcon(row.icon, 'pin-status-icon'));
+                    const l = document.createElement('span');
+                    l.className = 'pin-status-label';
+                    l.textContent = row.label;
+                    const b = document.createElement('span');
+                    b.className = pinStatusBadgeClass(row, st);
+                    b.textContent = st.text;
+                    item.appendChild(l);
+                    item.appendChild(b);
+                    statusList.appendChild(item);
+                    return { row: row, item: item, badge: b, key: st.key };
+                });
+                container.appendChild(statusList);
+
+                container._pinNodes = nodes;
+                container._pinLayoutUnit = layoutUnit;
+                return;
+            }
+
+            const chartWrap = document.createElement('div');
+            chartWrap.className = 'pins-chart-wrap' + (showYAxis ? '' : ' no-axis');
+            chartWrap.style.setProperty('--pin-top-space', pinTopSpacePx + 'px');
+            chartWrap.style.setProperty('--pin-bottom-space', pinBottomSpacePx + 'px');
+
+            if (showYAxis) {
+                const axis = document.createElement('div');
+                axis.className = 'y-axis';
+                const ax = metricCfg.axis;
+                for (let i = ax.length - 1; i >= 0; i--) {
+                    const tick = document.createElement('div');
+                    tick.className = 'y-tick';
+                    tick.style.fontSize = fontYTick + 'px';
+                    tick.textContent = metricCfg.axisFormat(ax[i]);
+                    axis.appendChild(tick);
+                }
+                chartWrap.appendChild(axis);
+            }
+
+            const chart = document.createElement('div');
+            chart.className = 'pins-chart';
+
+            for (let index = 0; index < n; index++) {
+                const v = pinValues[index];
+                const pct = Math.max(0, Math.min(100, ((v - mMin) / mRange) * 100));
+
+                const col = document.createElement('div');
+                col.className = 'pin-col';
+                const colFlash = wireOvercurrentFault() && Number((pins[index] && pins[index].current) || 0) >= ocLimitA;
+                if (colFlash) col.classList.add('fault-flash');
+                col._flash = colFlash;
+                nodes.cols.push(col);
+
+                const lbl = document.createElement('div');
+                lbl.className = 'pin-label';
+                lbl.style.fontSize = fontPinLabel + 'px';
+                lbl.textContent = 'P' + (index + 1);
+                col.appendChild(lbl);
+
+                const track = document.createElement('div');
+                track.className = showBarBg ? 'pin-track' : 'pin-track no-track-bg';
+                const fill = document.createElement('div');
+                fill.className = 'bar-fill pin-bar-fill';
+                fill.dataset.targetPct = pct.toFixed(1);
+                fill.style.height = '0%';
+                fill.style.background = barColor;
+                fill._pct = 0;
+                track.appendChild(fill);
+                nodes.fills.push(fill);
+
+                if (showPeakHold) {
+                    const pk = peakHoldPerPin[index];
+                    const peakPct = Math.max(0, Math.min(100, ((pk - mMin) / mRange) * 100));
+                    const peak = document.createElement('div');
+                    peak.className = 'pin-peak-mark';
+                    peak.style.bottom = peakPct.toFixed(1) + '%';
+                    peak.style.color = peakHoldColor;
+                    peak._pv = pk;
+                    track.appendChild(peak);
+                    nodes.peaks.push(peak);
+                } else {
+                    nodes.peaks.push(null);
+                }
+
+                col.appendChild(track);
+
+                const val = document.createElement('div');
+                val.className = 'pin-val';
+                val.style.fontSize = fontPinVal + 'px';
+                val.textContent = metricCfg.format(v, showUnit);
+                val._v = v;
+                col.appendChild(val);
+                nodes.vals.push(val);
+
+                chart.appendChild(col);
+            }
+
+            if (showYGrid) {
+                const gridOverlay = document.createElement('div');
+                gridOverlay.className = 'pins-grid-overlay';
+                metricCfg.axis.forEach(function (tickValue) {
+                    const norm = Math.max(0, Math.min(1, (tickValue - mMin) / mRange));
+                    const a = (1 - norm).toFixed(4);
+                    const b = (1 - 3 * norm).toFixed(4);
+                    const c = (-norm).toFixed(4);
+                    const d = (norm * 100).toFixed(2);
+                    const gridLine = document.createElement('div');
+                    gridLine.className = 'pin-grid-line';
+                    gridLine.style.bottom = 'calc(' + a + ' * var(--pin-top-space) + ' + b + ' * var(--pin-slot-gap) + ' + c + ' * var(--pin-bottom-space) + ' + d + '%)';
+                    gridOverlay.appendChild(gridLine);
+                });
+                chart.appendChild(gridOverlay);
+            }
+
+            chartWrap.appendChild(chart);
+            container.appendChild(chartWrap);
+
+            function buildHeadroomRow() {
+                const hrRow = document.createElement('div');
+                hrRow.className = 'pin-headroom-row position-' + headroomPosition + (showYAxis ? '' : ' no-axis');
+                hrRow.style.fontSize = fontHeadroom + 'px';
+                if (showYAxis) {
+                    const spacer = document.createElement('div');
+                    spacer.className = 'pin-headroom-spacer';
+                    hrRow.appendChild(spacer);
+                }
+                const cells = document.createElement('div');
+                cells.className = 'pin-headroom-cells';
+                for (let i = 0; i < n; i++) {
+                    const v = pinValues[i];
+                    const cell = document.createElement('span');
+                    cell.className = 'pin-headroom';
+                    const headroom = headroomLimit - v;
+                    cell.textContent = (headroom >= 0 ? '+' : '') + headroom.toFixed(metric === 'current' ? 2 : 1) + metricCfg.unit;
+                    if (headroom <= 0) cell.classList.add('low');
+                    else cell.style.color = headroomColor;
+                    cells.appendChild(cell);
+                    nodes.headroom.push(cell);
+                }
+                hrRow.appendChild(cells);
+                return hrRow;
+            }
+
+            if (showHeadroom && headroomLimit !== null && headroomPosition === 'top') {
+                container.insertBefore(buildHeadroomRow(), chartWrap);
+            }
+
+            if (showHeadroom && headroomLimit !== null && headroomPosition === 'bottom') {
+                container.appendChild(buildHeadroomRow());
+            }
+
+            container._pinNodes = nodes;
+            container._pinLayoutUnit = layoutUnit;
+
+            requestAnimationFrame(function () {
+                const fills = nodes.fills;
+                for (let i = 0; i < fills.length; i++) {
+                    const f = fills[i];
+                    f.style.height = (f.dataset.targetPct || '0') + '%';
+                    f._pct = parseFloat(f.dataset.targetPct || '0');
+                }
+            });
+        }
+
+
+        function openConfigPage() {
+            configPageOpen = true;
+            renderConfigPage();
+            fetchRawDeviceConfig();
+            fetchDeviceConfig().then(function () {
+                if (configPageOpen) renderConfigPage();
+            });
+            const overlay = document.getElementById('config-overlay');
+            if (overlay) {
+                overlay.removeAttribute('aria-hidden');
+                overlay.classList.add('config-overlay--open');
+            }
+        }
+
+        function closeConfigPage() {
+            configPageOpen = false;
+            const overlay = document.getElementById('config-overlay');
+            if (overlay) {
+                overlay.setAttribute('aria-hidden', 'true');
+                overlay.classList.remove('config-overlay--open');
+            }
+        }
+
+        function makeConfigSection(rows) {
+            var section = document.createElement('div');
+            section.className = 'cfg-section';
+            rows.forEach(function (pair) {
+                var row = document.createElement('div');
+                row.className = 'cfg-row';
+                var lbl = document.createElement('span');
+                lbl.className = 'cfg-row-label';
+                lbl.textContent = pair[0];
+                var val = document.createElement('span');
+                val.className = 'cfg-row-value';
+                val.textContent = (pair[1] !== undefined && pair[1] !== null && pair[1] !== '') ? String(pair[1]) : '—';
+                row.appendChild(lbl);
+                row.appendChild(val);
+                section.appendChild(row);
+            });
+            return section;
+        }
+
+        function renderConfigPage() {
+            var content = document.getElementById('cfg-content');
+            if (!content) return;
+            content.innerHTML = '';
+
+            if (deviceConfig) {
+                content.appendChild(makeConfigSection(Object.keys(deviceConfig).map(function (key) {
+                    return [key, deviceConfig[key]];
+                })));
+            } else {
+                var msg = document.createElement('div');
+                msg.className = 'cfg-loading';
+                msg.textContent = deviceConfigError ? 'Device configuration unavailable' : 'Loading configuration…';
+                content.appendChild(msg);
+            }
+
+            var divider = document.createElement('div');
+            divider.className = 'cfg-divider';
+            content.appendChild(divider);
+
+            var actions = document.createElement('div');
+            actions.className = 'cfg-actions';
+
+            var clearFaultsBtn = document.createElement('button');
+            clearFaultsBtn.id = 'clear-faults-btn';
+            clearFaultsBtn.textContent = 'Clear faults';
+            clearFaultsBtn.disabled = (getFaultStatus() === 0 && getFaultLog() === 0);
+            clearFaultsBtn.addEventListener('click', clearFaults);
+            actions.appendChild(clearFaultsBtn);
+
+            var resetPeakBtn = document.createElement('button');
+            resetPeakBtn.id = 'reset-peakhold-btn';
+            resetPeakBtn.textContent = 'Reset peak hold';
+            resetPeakBtn.addEventListener('click', function () {
+                resetPeakHold();
+                renderAll();
+            });
+            actions.appendChild(resetPeakBtn);
+
+            var restartBtn = document.createElement('button');
+            restartBtn.id = 'restart-service-btn';
+            restartBtn.textContent = serviceRestarting ? 'Restarting…' : 'Restart service';
+            restartBtn.disabled = serviceRestarting;
+            restartBtn.addEventListener('click', restartService);
+            actions.appendChild(restartBtn);
+
+            content.appendChild(actions);
+        }
+
+        async function clearFaults() {
+            var statusMask = getFaultStatus();
+            var logMask = getFaultLog();
+            if (statusMask === 0 && logMask === 0) return;
+
+            var btn = document.getElementById('clear-faults-btn');
+            if (btn) btn.disabled = true;
+
+            var debug = getIcueProperty('debugMode');
+            if (isDebugDataMode(debug)) {
+                latestData = makeDebugSnapshot('demo');
+                latestTimestamp = latestData.timestamp;
+                applyClearedFaults();
+                return;
+            }
+
+            try {
+                const r = await fetch(BASE_URL + '/faults/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ FaultStatusMask: statusMask, FaultLogMask: logMask })
+                });
+                if (r.ok) applyClearedFaults();
+                else if (btn) btn.disabled = false;
+            } catch (e) {
+                console.error('[WireViewAstral] clearFaults error:', e && e.message ? e.message : String(e));
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function applyClearedFaults() {
+            if (latestData) {
+                latestData.faultStatus = 0;
+                latestData.faultLog = 0;
+            }
+            renderAll();
+            if (configPageOpen) renderConfigPage();
+        }
+
+        async function restartService() {
+            serviceRestarting = true;
+            var btn = document.getElementById('restart-service-btn');
+            if (btn) { btn.textContent = 'Restarting…'; btn.disabled = true; }
+            try { await fetch(BASE_URL + '/restart', { method: 'POST' }); } catch (e) { }
+        }
+
+        function formatTotalPower() {
+            const v = latestData ? Number(latestData.totalPowerW) : NaN;
+            return Number.isFinite(v) ? Math.round(v) + ' W' : '-- W';
+        }
+
+        function formatTotalCurrent() {
+            const v = latestData ? Number(latestData.totalCurrentA) : NaN;
+            return Number.isFinite(v) ? Math.round(v) + ' A' : '-- A';
+        }
+
+        function formatTotalVoltage() {
+            const v = latestData ? Number(latestData.totalVoltageV) : NaN;
+            return Number.isFinite(v) ? v.toFixed(2) + ' V' : '-- V';
+        }
+
+        function makeBoardChip(cls, label, formatted, color) {
+            const chip = document.createElement('span');
+            chip.className = 'pin-board-temp ' + cls;
+            chip.style.color = color;
+            if (label) {
+                const lbl = document.createElement('span');
+                lbl.className = 'pbt-label';
+                lbl.textContent = label;
+                chip.appendChild(lbl);
+            }
+            const val = document.createElement('span');
+            val.className = 'pbt-val';
+            val.textContent = formatted;
+            chip.appendChild(val);
+            return chip;
+        }
+
+        function statusNumber(key) {
+            return latestData ? numberOrNull(latestData[key]) : null;
+        }
+
+        const MB_PER_GB = 1000;
+        const MISSING_TEXT = '--';
+
+        // Merged rows carry the unit once, at the end: "30.0 / 40.0 C", not "30.0 C / 40.0 C".
+        // A pair renders as segments so an absent half can be muted on its own; absence is a
+        // neutral state here, never a warning colour, since half-populated is a valid setup.
+        function pairSegments(aText, bText, unit) {
+            if (aText === null && bText === null) return [{ text: MISSING_TEXT, muted: true }];
+            const segments = [
+                aText === null ? { text: MISSING_TEXT, muted: true } : { text: aText },
+                { text: ' / ' },
+                bText === null ? { text: MISSING_TEXT, muted: true } : { text: bText }
+            ];
+            if (unit) segments.push({ text: ' ' + unit });
+            return segments;
+        }
+
+        function formatPairTemps(aKey, bKey) {
+            const a = statusNumber(aKey);
+            const b = statusNumber(bKey);
+            if (a === null && b === null) return pairSegments(null, null, null);
+            const unitLabel = (a === null ? formatTemp(b) : formatTemp(a)).unit === 'f' ? 'F' : 'C';
+            const part = v => (v === null ? null : formatTemp(v).value.toFixed(1));
+            return pairSegments(part(a), part(b), unitLabel);
+        }
+
+        function pairTempsHot(aKey, bKey, limitC) {
+            const a = statusNumber(aKey);
+            const b = statusNumber(bKey);
+            return (a !== null && a >= limitC) || (b !== null && b >= limitC);
+        }
+
+        const STATUS_METRICS = [
+            {
+                key: 'gpuCoreClock', label: 'Core Clock', icon: 'clock', showProp: 'statusShowCoreClock',
+                format: function () {
+                    const v = statusNumber('gpuCoreClock');
+                    return v === null ? '--' : Math.round(v) + ' MHz';
+                }
+            },
+            {
+                key: 'gpuMemClock', label: 'Memory Clock', icon: 'memory', showProp: 'statusShowMemClock',
+                format: function () {
+                    const v = statusNumber('gpuMemClock');
+                    return v === null ? '--' : Math.round(v) + ' MHz';
+                }
+            },
+            {
+                key: 'vramUsage', label: 'VRAM Usage', icon: 'vramusage', showProp: 'statusShowVramUsage',
+                format: function () {
+                    const used = statusNumber('vramUsed');
+                    const total = statusNumber('vramTotal');
+                    if (used === null || total === null) return '--';
+                    return (used / MB_PER_GB).toFixed(1) + ' / ' + Math.floor(total / MB_PER_GB) + ' GB';
+                }
+            },
+            {
+                key: 'temps', label: 'Core / VRAM Temp', icon: 'thermometer', showProp: 'statusShowTemps',
+                format: function () { return formatPairTemps('gpuCoreTemp', 'vramTemp'); },
+                hot: function () {
+                    const core = statusNumber('gpuCoreTemp');
+                    const vram = statusNumber('vramTemp');
+                    const coreLimit = clampRange(getIcueProperty('statusCoreTempThreshold'), 40, 120, 84);
+                    const vramLimit = clampRange(getIcueProperty('statusVramTempThreshold'), 40, 120, 95);
+                    return (core !== null && core >= coreLimit) || (vram !== null && vram >= vramLimit);
+                }
+            },
+            {
+                key: 'fans', label: 'Fans 1 / 2', icon: 'fan', showProp: 'statusShowFans',
+                format: function () {
+                    const rpm = v => (v === null ? null : String(Math.round(v)));
+                    return pairSegments(rpm(statusNumber('fan1')), rpm(statusNumber('fan2')), 'RPM');
+                }
+            },
+            {
+                key: 'boardTemps', label: 'Board In / Out', icon: 'connector', showProp: 'statusShowBoardTemps',
+                format: function () { return formatPairTemps('boardTempIn', 'boardTempOut'); },
+                hot: function () { return pairTempsHot('boardTempIn', 'boardTempOut', getBoardTempThresholdC()); },
+                alert: overtemperatureFault
+            },
+            {
+                key: 'extTemps', label: 'Ext. 1 / 2', icon: 'thermometer', showProp: 'statusShowExtTemps',
+                format: function () { return formatPairTemps('extTemp1', 'extTemp2'); },
+                hot: function () { return pairTempsHot('extTemp1', 'extTemp2', getBoardTempThresholdC()); }
+            }
+        ];
+
+        const STATUS_ICON_FILES = {
+            clock: 'vcore.svg',
+            memory: 'vram.svg',
+            thermometer: 'vtemp.svg',
+            connector: '12vhpwr.svg',
+            fan: 'vfan.svg',
+            vramusage: 'vramusage.svg'
+        };
+
+        function makeMaskIcon(file, className) {
+            const span = document.createElement('span');
+            span.className = className;
+            const url = "url('resources/" + file + "')";
+            span.style.webkitMaskImage = url;
+            span.style.maskImage = url;
+            return span;
+        }
+
+        function makeStatusIcon(name) {
+            const file = STATUS_ICON_FILES[name] || 'vcore.svg';
+            return makeMaskIcon(file, 'status-metric-icon');
+        }
+
+        // format() returns either a plain string or an array of {text, muted} segments. Segments
+        // are rebuilt only when their signature changes, and muting uses opacity rather than a
+        // colour so it survives the colour this function writes inline on every tick.
+        function applyStatusValue(valueEl, value) {
+            if (!Array.isArray(value)) {
+                if (valueEl._segSig !== undefined) valueEl._segSig = undefined;
+                setTextIf(valueEl, value);
+                return;
+            }
+            const sig = value.map(function (s) { return s.text + (s.muted ? '\x00m' : ''); }).join('\x01');
+            if (valueEl._segSig === sig) return;
+            valueEl._segSig = sig;
+            valueEl.textContent = '';
+            value.forEach(function (s) {
+                const span = document.createElement('span');
+                if (s.muted) span.className = 'status-metric-muted';
+                span.textContent = s.text;
+                valueEl.appendChild(span);
+            });
+        }
+
+        function applyStatusMetricValue(metric, valueEl, defaultColor, rowEl) {
+            applyStatusValue(valueEl, metric.format());
+            const hot = metric.hot ? metric.hot() : false;
+            valueEl.style.color = hot ? 'var(--red)' : defaultColor;
+            if (rowEl) rowEl.classList.toggle('alert', metric.alert ? metric.alert() : false);
+        }
+
+        function renderStatusView() {
+            const container = document.getElementById('view-status');
+            if (!container) return;
+            if (!latestData) {
+                container.innerHTML = '';
+                container._statusNodes = null;
+                container.dataset.statusStructKey = '';
+                statusSettingsDirty = true;
+                return;
+            }
+
+            const valueColor = getIcueProperty('statusValueColor') || '#ffffff';
+
+            let fontScale, labelColor, iconColor, visible, structKey, needRebuild;
+            if (statusSettingsDirty || !container._statusNodes) {
+                fontScale = clampRange(getIcueProperty('statusFontSize'), 50, 400, 120) / 100;
+                labelColor = getIcueProperty('statusLabelColor') || '';
+                iconColor = getIcueProperty('statusIconColor') || '';
+                visible = STATUS_METRICS.filter(function (m) { return getBoolProperty(m.showProp, true); });
+                structKey = [
+                    visible.map(function (m) { return m.key; }).join(':'),
+                    fontScale.toFixed(3), valueColor, labelColor, iconColor
+                ].join('\x00');
+                needRebuild = !container._statusNodes || container.dataset.statusStructKey !== structKey;
+                statusSettingsDirty = false;
+            } else {
+                needRebuild = false;
+            }
+
+            if (!needRebuild) {
+                const nodes = container._statusNodes;
+                const metrics = nodes.metrics, valueEls = nodes.valueEls, rowEls = nodes.rowEls;
+                for (let i = 0; i < metrics.length; i++) {
+                    applyStatusMetricValue(metrics[i], valueEls[i], valueColor, rowEls[i]);
+                }
+                return;
+            }
+
+            container.dataset.statusStructKey = structKey;
+
+            container.innerHTML = '';
+            ensureHudTitle(container, 'STATUS', '');
+            container.style.setProperty('--status-scale', fontScale);
+
+            const grid = document.createElement('div');
+            grid.className = 'status-metric-grid';
+            const valueEls = [];
+            const rowEls = [];
+
+            visible.forEach(function (m) {
+                const row = document.createElement('div');
+                row.className = 'status-metric-row';
+                row.dataset.metric = m.key;
+
+                const iconWrap = document.createElement('span');
+                iconWrap.className = 'status-metric-icon-wrap';
+                if (iconColor) iconWrap.style.color = iconColor;
+                iconWrap.appendChild(makeStatusIcon(m.icon));
+
+                const label = document.createElement('span');
+                label.className = 'status-metric-label';
+                label.textContent = m.label;
+                if (labelColor) label.style.color = labelColor;
+
+                const value = document.createElement('span');
+                value.className = 'status-metric-value';
+                applyStatusMetricValue(m, value, valueColor, row);
+
+                row.appendChild(iconWrap);
+                row.appendChild(label);
+                row.appendChild(value);
+                grid.appendChild(row);
+                valueEls.push(value);
+                rowEls.push(row);
+            });
+
+            container.appendChild(grid);
+            container._statusNodes = { metrics: visible, valueEls: valueEls, rowEls: rowEls };
+        }
+
+        function renderAllViews() {
+            var panels = getActivePanels();
+            renderActivePanels(panels);
+        }
+
+        function getLayoutMode() {
+            var w = window.innerWidth;
+            var h = window.innerHeight;
+            if (w >= 2400 || h >= 2400) return 'xl';
+            if (w >= 1600 || h >= 1600) return 'lg';
+            return 'single';
+        }
+
+        function getActivePanels(mode) {
+            if (!mode) mode = getLayoutMode();
+            if (mode === 'single') return [currentView];
+            var p1 = currentView;
+            var p2 = getIcueProperty('layoutPanel2');
+            var p2on = p2 && p2 !== 'off';
+            if (!p2on) return [p1];
+            return [p1, p2];
+        }
+
+        var lastActivateKey = '';
+
+        function activatePanels(views, mode) {
+            if (!mode) mode = getLayoutMode();
+            var scanlinesOn = document.documentElement.dataset.hudScanlines === '1';
+            var key = mode + '|' + (scanlinesOn ? 1 : 0) + '|' + views.join(',');
+            if (key === lastActivateKey) return;
+            lastActivateKey = key;
+
+            document.documentElement.dataset.layout = mode;
+            if (!cachedViewPanels) {
+                cachedViewPanels = Array.from(document.querySelectorAll('.view-panel'));
+            }
+            cachedViewPanels.forEach(function (panel) {
+                panel.classList.remove('active');
+                panel.classList.add('hud-frame');
+                panel.classList.toggle('hud-scanlines', scanlinesOn);
+            });
+            views.forEach(function (view) {
+                var panel = document.getElementById('view-' + view);
+                if (panel) panel.classList.add('active');
+            });
+        }
+
+        function ensureHudTitle(container, text, sub, subClass, cable) {
+            var title = container.querySelector(':scope > .hud-title');
+            if (!title) {
+                title = document.createElement('div');
+                title.className = 'hud-title';
+                container.insertBefore(title, container.firstChild);
+            }
+            var subClassName = 'hud-title-sub' + (subClass ? ' ' + subClass : '');
+            if (title.dataset.text !== text) {
+                title.dataset.text = text;
+                title.innerHTML = '';
+                title.appendChild(document.createTextNode(text));
+                if (sub) {
+                    var s = document.createElement('span');
+                    s.className = subClassName;
+                    s.textContent = sub;
+                    title.appendChild(s);
+                }
+            } else {
+                var subSpan = title.querySelector('.hud-title-sub');
+                if (sub) {
+                    if (subSpan) {
+                        subSpan.textContent = sub;
+                        subSpan.className = subClassName;
+                    } else {
+                        var s2 = document.createElement('span');
+                        s2.className = subClassName;
+                        s2.textContent = sub;
+                        title.appendChild(s2);
+                    }
+                } else if (subSpan) {
+                    subSpan.remove();
+                }
+            }
+            updateHudCable(title, cable);
+            return title;
+        }
+
+        function updateHudCable(title, cable) {
+            if (!title) return;
+            var span = title.querySelector('.hud-title-cable');
+            if (!cable) {
+                if (span) span.remove();
+                return;
+            }
+            if (!span) {
+                span = document.createElement('span');
+                span.className = 'hud-title-cable';
+                title.insertBefore(span, title.querySelector('.hud-title-sub'));
+            }
+            setTextIf(span, cable);
+        }
+
+        function refreshHudCable(container) {
+            var title = container ? container.querySelector(':scope > .hud-title') : null;
+            updateHudCable(title, cableRatingText());
+        }
+
+        function renderActivePanels(views) {
+            var seen = {};
+            views.forEach(function (view) {
+                if (seen[view]) return;
+                seen[view] = true;
+                if (view === 'pins') renderPinsView();
+                else if (view === 'status') renderStatusView();
+            });
+        }
+
+        function renderAll() {
+            var mode = getLayoutMode();
+            var panels = getActivePanels(mode);
+            activatePanels(panels, mode);
+            renderActivePanels(panels);
+            renderStateOverlay();
+            checkWarnings();
+        }
+
+        function buildWarnSection(parent, heading, lines) {
+            var section = document.createElement('div');
+            section.className = 'warn-section';
+            if (heading) {
+                var head = document.createElement('div');
+                head.className = 'warn-subhead';
+                head.textContent = heading;
+                section.appendChild(head);
+            }
+            lines.forEach(function (text) {
+                var line = document.createElement('div');
+                line.className = 'warn-line';
+                line.textContent = '- ' + text;
+                section.appendChild(line);
+            });
+            parent.appendChild(section);
+        }
+
+        function checkWarnings() {
+            var doWarn = getBoolProperty('warnOnFault', false);
+            var activeMask = getFaultStatus() & FAULT_MASK_ALL;
+
+            if (!doWarn || activeMask === 0) {
+                hideAllWarnings();
+                return;
+            }
+
+            var activeFaults = FAULTS.filter(function (f) { return (activeMask & f.bit) !== 0; });
+
+            var warnFontScale = Math.max(0.5, Math.min(2, (Number(getIcueProperty('warnFontSize')) || 100) / 100));
+            var warnColor = getIcueProperty('warnColor') || '#8a0f1f';
+            var warnTextColor = getIcueProperty('warnTextColor') || '#ffffff';
+            var warnOpacity = Math.max(0, Math.min(100, Number(getIcueProperty('warnTransparency')) || 90)) / 100;
+            var banner = document.getElementById('warn-banner');
+            if (!banner) return;
+            banner.style.opacity = String(warnOpacity);
+
+            var title = activeFaults.length > 1 ? 'Device faults!' : 'Device fault!';
+
+            var sig = JSON.stringify({ m: activeMask, c: warnColor, t: warnTextColor, f: warnFontScale });
+            if (banner.dataset.warnSig === sig) {
+                updateBannerVisibility();
+                return;
+            }
+            banner.dataset.warnSig = sig;
+            banner.innerHTML = '';
+
+            var card = document.createElement('div');
+            card.className = 'warn-card';
+            card.style.setProperty('--warn-color', warnColor);
+            card.style.setProperty('--warn-text', warnTextColor);
+            card.style.fontSize = 'calc(var(--font-sm) * ' + warnFontScale + ')';
+
+            var top = document.createElement('div');
+            top.className = 'warn-card-top';
+            var icon = document.createElement('span');
+            icon.className = 'warn-icon';
+            icon.textContent = '⚠';
+            var ttl = document.createElement('span');
+            ttl.className = 'warn-title';
+            ttl.textContent = title;
+            var dismiss = document.createElement('button');
+            dismiss.className = 'warn-dismiss';
+            dismiss.textContent = '✕';
+            dismiss.setAttribute('aria-label', 'Dismiss');
+            dismiss.addEventListener('click', function () {
+                banner.innerHTML = '';
+                banner.dataset.warnSig = '';
+                updateBannerVisibility();
+            });
+            top.appendChild(icon);
+            top.appendChild(ttl);
+            top.appendChild(dismiss);
+            card.appendChild(top);
+
+            buildWarnSection(card, '', activeFaults.map(function (f) { return f.label; }));
+
+            banner.appendChild(card);
+            updateBannerVisibility();
+        }
+
+        function updateBannerVisibility() {
+            var banner = document.getElementById('warn-banner');
+            if (!banner) return;
+            var hasCards = banner.children.length > 0;
+            if (hasCards) banner.classList.add('warn-banner--visible');
+            else banner.classList.remove('warn-banner--visible');
+        }
+
+        function hideAllWarnings() {
+            var banner = document.getElementById('warn-banner');
+            if (!banner) return;
+            if (banner.dataset.warnSig === '' && banner.children.length === 0) return;
+            banner.innerHTML = '';
+            banner.dataset.warnSig = '';
+            banner.classList.remove('warn-banner--visible');
+        }
+
+        async function postPollConfigIfNeeded() {
+            const nextPollMs = getConfiguredPollMs();
+            if (nextPollMs === lastAppliedPollMs) return;
+            lastAppliedPollMs = nextPollMs;
+            try {
+                await fetch(BASE_URL + '/config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pollIntervalMs: nextPollMs })
+                });
+            } catch (e) {
+            }
+        }
+
+        async function fetchServiceConfig() {
+            try {
+                const response = await fetch(BASE_URL + '/config', { cache: 'no-store' });
+                if (!response.ok) return;
+                const payload = await response.json();
+                fallbackPollMs = clampRange(payload.pollIntervalMs, 100, 30000, 1000);
+            } catch (e) {
+            }
+        }
+
+        async function fetchDeviceConfig() {
+            try {
+                const response = await fetch(BASE_URL + '/device/config', {
+                    cache: 'no-store',
+                    headers: { Accept: 'application/json' }
+                });
+                if (!response.ok) {
+                    deviceConfigError = true;
+                    return;
+                }
+                const payload = await response.json();
+                if (payload && payload.configs && typeof payload.configs === 'object') {
+                    deviceConfig = payload.configs;
+                    deviceConfigError = false;
+                    pinsSettingsDirty = true;
+                } else {
+                    deviceConfigError = true;
+                }
+            } catch (e) {
+                deviceConfigError = true;
+            }
+        }
+
+        async function fetchRawDeviceConfig() {
+            try {
+                const response = await fetch(BASE_URL + '/device/rawConfig', {
+                    cache: 'no-store',
+                    headers: { Accept: 'application/json' }
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (payload && typeof payload === 'object') {
+                    rawDeviceConfig = payload;
+                    pinsSettingsDirty = true;
+                    statusSettingsDirty = true;
+                }
+            } catch (e) {
+            }
+        }
+
+        function clearWsGrace() {
+            if (wsGraceTimer) { clearTimeout(wsGraceTimer); wsGraceTimer = null; }
+        }
+
+        function closeWebSocket() {
+            if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+            if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; ws.close(); ws = null; }
+        }
+
+        function scheduleWsReconnect() {
+            wsReconnectTimer = setTimeout(function () {
+                wsReconnectTimer = null;
+                connectWebSocket();
+            }, wsBackoffMs);
+            wsBackoffMs = Math.min(wsBackoffMs * 2, 16000);
+        }
+
+        function connectWebSocket() {
+            closeWebSocket();
+            lastAppliedPollMs = -1;
+            const wsUrl = BASE_URL.replace(/^http/, 'ws') + '/ws';
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = async function () {
+                clearWsGrace();
+                wsBackoffMs = 400;
+                await postPollConfigIfNeeded();
+                try {
+                    const r = await fetch(BASE_URL + '/sensors', { cache: 'no-store', headers: { Accept: 'application/json' } });
+                    if (r.ok) {
+                        const payload = await r.json();
+                        const normalized = normalizeSensors(payload);
+                        if (normalized) {
+                            latestData = normalized;
+                            latestTimestamp = latestData.timestamp;
+                            setState('content', '');
+                        }
+                    }
+                } catch (e) { }
+            };
+
+            ws.onmessage = function (event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    const normalized = normalizeSensors(payload);
+                    if (!normalized) return;
+                    latestData = normalized;
+                    latestTimestamp = latestData.timestamp;
+                    if (serviceRestarting) {
+                        serviceRestarting = false;
+                        var btn = document.getElementById('restart-service-btn');
+                        if (btn) { btn.textContent = 'Restart service'; btn.disabled = false; }
+                    }
+                    setState('content', '');
+                } catch (e) {
+                    console.error('[WireViewAstral] WS parse error:', e && e.message ? e.message : String(e));
+                }
+            };
+
+            ws.onclose = function (event) {
+                ws = null;
+                console.warn('[WireViewAstral] WS closed', { code: event && event.code, wasClean: event && event.wasClean });
+                if (!wsGraceTimer) {
+                    wsGraceTimer = setTimeout(function () {
+                        wsGraceTimer = null;
+                        if (ws && ws.readyState === WebSocket.OPEN) return;
+                        latestData = null;
+                        latestTimestamp = null;
+                        setState('error', 'WireView / GPU sensors service is not running. Ensure the service is installed to proceed');
+                    }, WS_GRACE_MS);
+                }
+                scheduleWsReconnect();
+            };
+
+            ws.onerror = function () {
+            };
+        }
+
+        async function onIcueDataUpdated() {
+            invalidatePropCache();
+            pinsSettingsDirty = true;
+            statusSettingsDirty = true;
+            applyStyles();
+
+            const configuredView = getIcueProperty('viewMode');
+            if (configuredView === 'pins' || configuredView === 'status') {
+                currentView = configuredView;
+            }
+
+            await postPollConfigIfNeeded();
+
+            const debug = getIcueProperty('debugMode');
+            if (isDebugDataMode(debug)) {
+                closeWebSocket();
+                clearWsGrace();
+                latestData = makeDebugSnapshot(debug);
+                latestTimestamp = latestData.timestamp;
+                setState('content', '');
+                return;
+            }
+            if (debug === 'error') {
+                closeWebSocket();
+                clearWsGrace();
+                latestData = null;
+                latestTimestamp = null;
+                setState('error', 'WireView / GPU sensors service is not running. Ensure the service is installed to proceed');
+                return;
+            }
+
+            if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+                if (!wsReconnectTimer) connectWebSocket();
+            }
+
+            renderAll();
+        }
+
+        async function onIcueInitialized() {
+            setState('loading', 'Loading');
+            await fetchServiceConfig();
+            fetchDeviceConfig();
+            fetchRawDeviceConfig();
+            await onIcueDataUpdated();
+        }
+
+        if (typeof iCUE_initialized !== 'undefined' && iCUE_initialized) {
+            onIcueInitialized();
+        } else {
+            setState('loading', 'Loading');
+            onIcueDataUpdated();
+        }
+
+        window.addEventListener('resize', function () {
+            pinsSettingsDirty = true;
+            statusSettingsDirty = true;
+            lastActivateKey = '';
+            renderAll();
+        });
+
+        (function () {
+            var lastTapTime = 0;
+            var lpTimer = null;
+            var startX = 0;
+            var startY = 0;
+            var root = document.querySelector('.widget-root');
+            if (!root) return;
+
+            var cancelBtn = document.getElementById('cfg-cancel-btn');
+            if (cancelBtn) cancelBtn.addEventListener('click', function () { closeConfigPage(); });
+
+            var refreshBtn = document.getElementById('cfg-refresh-btn');
+            if (refreshBtn) refreshBtn.addEventListener('click', async function () {
+                refreshBtn.disabled = true;
+                await Promise.all([fetchDeviceConfig(), fetchRawDeviceConfig()]);
+                if (configPageOpen) renderConfigPage();
+                renderAll();
+                refreshBtn.disabled = false;
+            });
+
+            root.addEventListener('click', function (e) {
+                if (getIcueProperty('configShortcut') === 'long-press') return;
+                if (e.target.closest('button')) return;
+                var now = Date.now();
+                if (now - lastTapTime < 350) {
+                    lastTapTime = 0;
+                    if (configPageOpen) closeConfigPage();
+                    else openConfigPage();
+                } else {
+                    lastTapTime = now;
+                }
+            });
+
+            root.addEventListener('pointerdown', function (e) {
+                if (getIcueProperty('configShortcut') !== 'long-press') return;
+                if (e.target.closest('button')) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                lpTimer = setTimeout(function () {
+                    lpTimer = null;
+                    if (configPageOpen) closeConfigPage();
+                    else openConfigPage();
+                }, 500);
+            });
+
+            function cancelLp() {
+                if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+            }
+
+            root.addEventListener('pointerup', cancelLp);
+            root.addEventListener('pointercancel', cancelLp);
+            root.addEventListener('pointermove', function (e) {
+                if (!lpTimer) return;
+                var dx = e.clientX - startX;
+                var dy = e.clientY - startY;
+                if (dx * dx + dy * dy > 100) cancelLp();
+            });
+        }());
+    </script>
+</body>
+
+</html>
