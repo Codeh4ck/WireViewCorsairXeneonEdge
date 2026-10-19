@@ -384,12 +384,18 @@ Desktop.ini
 Widget/docs/
 Widget/evals/
 Widget/references/
+Widget/tests/
+Widget/dist/
+Widget/.claude/
 Widget/skill.md
 Widget/MEMORY.md
-Widget/.claude/
 Widget/project_widget_tech.md
 Widget/project_widget_views.md
 Widget/project_wireview_widget.md
+Widget/MEMORY_ASUS.md
+Widget/project_asus_widget.md
+Widget/project_wireviewasus_widget.md
 
 *.exe
 *.dll
+
