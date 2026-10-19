@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
 using WireViewMonitor.Contracts.WireView;
 
 namespace WireViewMonitor.Service.WireView;
@@ -9,7 +8,6 @@ internal static class WindowsSetupApi
     private static readonly IntPtr InvalidHandleValue = new(-1);
 
     public static IntPtr SetupDiGetClassDevsAllClassesPresent() => WinApi.SetupDiGetClassDevsW(IntPtr.Zero, null, IntPtr.Zero, 6U);
-    private static IntPtr SetupDiGetClassDevsDeviceInterfacePresent(ref Guid interfaceGuid) => WinApi.SetupDiGetClassDevs(ref interfaceGuid, null, IntPtr.Zero, 18U);
 
     public static bool IsInvalidHandle(IntPtr h) => h == IntPtr.Zero || h == InvalidHandleValue;
 
@@ -49,44 +47,6 @@ internal static class WindowsSetupApi
             : DecodeMultiSzUtf16(buffer);
     }
 
-    public static IEnumerable<string> EnumerateDeviceInterfacePaths(Guid interfaceGuid)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            yield break;
-        }
-
-        var handle = SetupDiGetClassDevsDeviceInterfacePresent(ref interfaceGuid);
-
-        if (IsInvalidHandle(handle))
-        {
-            yield break;
-        }
-
-        try
-        {
-            var index = 0;
-                    
-            var deviceInterfaceData = new SpDeviceInterfaceData
-            {
-                CbSize = (uint)Marshal.SizeOf<SpDeviceInterfaceData>()
-            };
-                    
-            for (var interfaceDeviceData = deviceInterfaceData; WinApi.SetupDiEnumDeviceInterfaces(handle, IntPtr.Zero, ref interfaceGuid, (uint)index, ref interfaceDeviceData); ++index)
-            {
-                var devicePath = TryGetDevicePath(handle, ref interfaceDeviceData);
-                if (!string.IsNullOrWhiteSpace(devicePath))
-                {
-                    yield return devicePath;
-                }
-            }
-        }
-        finally
-        {
-            WinApi.SetupDiDestroyDeviceInfoList(handle);
-        }
-    }
-
     private static string DecodeUtf16String(byte[] bytes)
     {
         var str = Encoding.Unicode.GetString(bytes);
@@ -96,33 +56,4 @@ internal static class WindowsSetupApi
     }
 
     private static string[] DecodeMultiSzUtf16(byte[] bytes) => Encoding.Unicode.GetString(bytes).Split(char.MinValue, (StringSplitOptions)3);
-
-    private static string? TryGetDevicePath(IntPtr h, ref SpDeviceInterfaceData idd)
-    {
-        uint requiredSize = 0;
-        WinApi.SetupDiGetDeviceInterfaceDetail(h, ref idd, IntPtr.Zero, 0U, ref requiredSize, IntPtr.Zero);
-        
-        if (requiredSize == 0U)
-        {
-            return null;
-        }
-
-        var deviceInterfaceDetailData = Marshal.AllocHGlobal((int)requiredSize);
-        try
-        {
-            var num = IntPtr.Size == 8 ? 8 : 6;
-            Marshal.WriteInt32(deviceInterfaceDetailData, num);
-            if (!WinApi.SetupDiGetDeviceInterfaceDetail(h, ref idd, deviceInterfaceDetailData, requiredSize, ref requiredSize, IntPtr.Zero))
-            {
-                return null;
-            }
-
-            var stringAuto = Marshal.PtrToStringAuto(deviceInterfaceDetailData + num);
-            return string.IsNullOrWhiteSpace(stringAuto) ? null : stringAuto;
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(deviceInterfaceDetailData);
-        }
-    }
 }

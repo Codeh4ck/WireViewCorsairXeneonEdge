@@ -29,9 +29,18 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     private const int ConfigV2Size = 72; // Marshal.SizeOf<DeviceConfigStructV2>()
     private const int ConfigV3Size = 88; // Marshal.SizeOf<DeviceConfigStructV3>()
 
+    private const byte CmdReadVendorData = 0x01;
     private const byte CmdReadSensors = 0x04;
     private const byte CmdReadConfig = 0x05;
 
+    // Protocol IDs, not Windows USB VID/PID pairs
+    private static readonly Dictionary<(byte VendorId, byte ProductId), string> SupportedDevices = new()
+    {
+        [(0xEF, 0x05)] = "WireView Pro II",
+        [(0xEF, 0x06)] = "WireView Pro II Noctua Edition"
+    };
+
+    private readonly object _portGate = new();
     private SharedSerialPort? _port;
     private CancellationTokenSource? _cts;
     private Task? _worker;
@@ -84,17 +93,21 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
     private void DisposePort()
     {
-        try
+        lock (_portGate)
         {
-            _port?.Dispose();
-        }
-        catch
-        {
-            // ignored
-        }
+            try
+            {
+                _port?.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
 
-        _port = null;
-        _handshakeComplete = false;
+            _port = null;
+            PortName = string.Empty;
+            _handshakeComplete = false;
+        }
     }
 
     private async Task LoopAsync(CancellationToken token)
@@ -109,65 +122,76 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
                 continue;
             }
 
-            var portName = FindComPort();
+            var data = ReadAvailableSensors(token);
 
-            if (portName is null)
+            if (data is not null)
             {
-                if (wasConnected)
+                if (!wasConnected)
                 {
-                    wasConnected = false;
-                    PortName = string.Empty;
-                    DisposePort();
-                    ConnectionChanged?.Invoke(this, false);
+                    wasConnected = true;
+                    ConnectionChanged?.Invoke(this, true);
                 }
 
-                await Task.Delay(_pollIntervalMs, token);
-                continue;
+                DataUpdated?.Invoke(this, data);
             }
-
-            // Recreate port if the port name changed
-            if (_port is null || PortName != portName)
+            else if (wasConnected)
             {
-                DisposePort();
-                PortName = portName;
-                _port = new SharedSerialPort(portName, Baud, Parity.None, 8, StopBits.One)
-                {
-                    ReadTimeout = ReadTimeoutMs,
-                    WriteTimeout = ReadTimeoutMs
-                };
-            }
-
-            try
-            {
-                var data = ReadSensors();
-
-                if (data is not null)
-                {
-                    if (!wasConnected)
-                    {
-                        wasConnected = true;
-                        ConnectionChanged?.Invoke(this, true);
-                    }
-
-                    DataUpdated?.Invoke(this, data);
-                }
-                else if (wasConnected)
-                {
-                    wasConnected = false;
-                    ConnectionChanged?.Invoke(this, false);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error reading sensors on {Port}", PortName);
-                if (wasConnected)
-                {
-                    wasConnected = false;
-                    ConnectionChanged?.Invoke(this, false);
-                }
+                wasConnected = false;
+                ConnectionChanged?.Invoke(this, false);
             }
 
             await Task.Delay(_pollIntervalMs, token);
+        }
+    }
+
+    private WireViewSensorData? ReadAvailableSensors(CancellationToken token)
+    {
+        lock (_portGate)
+        {
+            var ports = FindComPorts();
+            
+            // Keep the active device first instead of switching with enumeration order.
+            if (ports.Remove(PortName))
+            {
+                ports.Insert(0, PortName);
+            }
+
+            foreach (var portName in ports)
+            {
+                if (token.IsCancellationRequested || _yieldingToWireViewApp)
+                {
+                    break;
+                }
+
+                try
+                {
+                    if (_port is null || PortName != portName)
+                    {
+                        DisposePort();
+                        PortName = portName;
+                        _port = new SharedSerialPort(portName, Baud, Parity.None, 8, StopBits.One)
+                        {
+                            ReadTimeout = ReadTimeoutMs,
+                            WriteTimeout = ReadTimeoutMs
+                        };
+                    }
+
+                    var data = ReadSensors();
+                    if (data is not null)
+                    {
+                        return data;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error probing or reading WireView on {Port}", portName);
+                }
+
+                DisposePort();
+            }
+
+            DisposePort();
+            return null;
         }
     }
 
@@ -178,7 +202,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
-        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        if (!Monitor.TryEnter(_portGate, LockTimeoutMs))
         {
             logger.LogWarning("Could not acquire port lock on {Port}, skipping poll", PortName);
             return null;
@@ -186,8 +210,9 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         try
         {
-            if (!_port.Open())
+            if (_port is null || !_port.Open())
             {
+                logger.LogDebug("Could not open WireView candidate {Port}", PortName);
                 return null;
             }
 
@@ -208,11 +233,18 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             var buffer = ReadExact(_port, StructSize);
             _port.Close();
 
+            if (buffer is null)
+            {
+                _handshakeComplete = false;
+                logger.LogDebug("Incomplete WireView sensor response on {Port}", PortName);
+            }
+
             return buffer is null ? null : Parse(buffer);
         }
         finally
         {
-            Monitor.Exit(_port);
+            _port?.Close();
+            Monitor.Exit(_portGate);
         }
     }
 
@@ -224,7 +256,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return;
         }
 
-        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        if (!Monitor.TryEnter(_portGate, LockTimeoutMs))
         {
             logger.LogWarning("Could not acquire port lock on {Port}, skipping fault clear", PortName);
             return;
@@ -232,7 +264,12 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         try
         {
-            if (!_port.Open())
+            if (_port is null || !_port.Open())
+            {
+                return;
+            }
+
+            if (!Handshake(_port))
             {
                 return;
             }
@@ -255,7 +292,8 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
         }
         finally
         {
-            Monitor.Exit(_port);
+            _port?.Close();
+            Monitor.Exit(_portGate);
         }
     }
 
@@ -266,7 +304,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
-        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        if (!Monitor.TryEnter(_portGate, LockTimeoutMs))
         {
             logger.LogWarning("Could not acquire port lock on {Port}, skipping config read", PortName);
             return null;
@@ -274,7 +312,11 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         try
         {
-            _port.Open();
+            if (_port is null || !_port.Open())
+            {
+                return null;
+            }
+
             _port.DiscardInBuffer();
 
             if (!Handshake(_port))
@@ -311,7 +353,11 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             }
 
             // Full read with correct size
-            _port.Open();
+            if (!_port.Open())
+            {
+                return null;
+            }
+
             _port.DiscardInBuffer();
             _port.Write([CmdReadConfig], 0, 1);
 
@@ -327,7 +373,8 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
         }
         finally
         {
-            Monitor.Exit(_port);
+            _port?.Close();
+            Monitor.Exit(_portGate);
         }
     }
 
@@ -338,7 +385,7 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             return null;
         }
 
-        if (!Monitor.TryEnter(_port, LockTimeoutMs))
+        if (!Monitor.TryEnter(_portGate, LockTimeoutMs))
         {
             logger.LogWarning("Could not acquire port lock on {Port}, skipping raw config read", PortName);
             return null;
@@ -346,7 +393,11 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
 
         try
         {
-            _port.Open();
+            if (_port is null || !_port.Open())
+            {
+                return null;
+            }
+
             _port.DiscardInBuffer();
 
             if (!Handshake(_port))
@@ -383,7 +434,11 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
             }
 
             // Full read with correct size
-            _port.Open();
+            if (!_port.Open())
+            {
+                return null;
+            }
+
             _port.DiscardInBuffer();
             _port.Write([CmdReadConfig], 0, 1);
 
@@ -399,28 +454,61 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
         }
         finally
         {
-            Monitor.Exit(_port);
+            _port?.Close();
+            Monitor.Exit(_portGate);
         }
     }
 
-    private static bool Handshake(SharedSerialPort port)
+    private bool Handshake(SharedSerialPort port)
     {
+        _handshakeComplete = false;
         var responseSize = WelcomeString.Length + 1; // 32 bytes
 
         port.DiscardInBuffer();
-        port.RtsEnable = true;
-        port.Write([], 0, 0);
-
-        var buf = ReadExact(port, responseSize);
-        port.RtsEnable = false;
+        byte[]? buf;
+        try
+        {
+            port.RtsEnable = true;
+            port.Write([], 0, 0);
+            buf = ReadExact(port, responseSize);
+        }
+        finally
+        {
+            port.RtsEnable = false;
+        }
 
         if (buf is null)
         {
+            logger.LogDebug("No complete WireView welcome response on {Port}", port.PortName);
             return false;
         }
 
         var response = Encoding.ASCII.GetString(buf, 0, responseSize).TrimEnd('\0');
-        return string.Equals(response, WelcomeString, StringComparison.Ordinal);
+        if (!string.Equals(response, WelcomeString, StringComparison.Ordinal))
+        {
+            logger.LogDebug("Unexpected WireView welcome response on {Port}: {Response}", port.PortName, response);
+            return false;
+        }
+
+        port.DiscardInBuffer();
+        port.Write([CmdReadVendorData], 0, 1);
+        var vendorData = ReadExact(port, 3);
+        if (vendorData is null)
+        {
+            logger.LogDebug("Incomplete WireView vendor response on {Port}", port.PortName);
+            return false;
+        }
+
+        if (!SupportedDevices.TryGetValue((vendorData[0], vendorData[1]), out var model))
+        {
+            logger.LogWarning("Unsupported WireView device on {Port}: vendor {VendorId:X2}, product {ProductId:X2}",
+                port.PortName, vendorData[0], vendorData[1]);
+            return false;
+        }
+
+        logger.LogInformation("Identified {Model} on {Port}, firmware {FirmwareVersion}", model, port.PortName, vendorData[2]);
+        _handshakeComplete = true;
+        return true;
     }
 
     private static byte[]? ReadExact(SerialPort port, int size)
@@ -572,17 +660,22 @@ public sealed class WireViewProReader(ILogger<WireViewProReader> logger) : IDisp
     private static ushort ReadU16(byte[] b, int o) => (ushort)(b[o] | b[o + 1] << 8);
     private static uint ReadU32(byte[] b, int o) => (uint)(b[o] | b[o + 1] << 8 | b[o + 2] << 16 | b[o + 3] << 24);
 
-    private string? FindComPort()
+    private List<string> FindComPorts()
     {
         try
         {
             var ports = Stm32PortFinder.FindMatchingComPorts();
-            return ports.Count > 0 ? ports[0] : null;
+            if (ports.Count == 0)
+            {
+                logger.LogDebug("No matching WireView COM ports found");
+            }
+
+            return ports;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to enumerate COM ports");
-            return null;
+            return [];
         }
     }
 }
